@@ -9,8 +9,9 @@ const PDFDocument = require('pdfkit');
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// --- 1. CONFIGURAÇÃO DE CAMINHOS (Pasta: dados) ---
-const DATA_DIR = path.join(__dirname, 'dados');
+// --- 1. CONFIGURAÇÃO DE CAMINHOS (Pasta: data) ---
+// Garante que o Node procura na pasta 'data' que criaste no GitHub
+const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 const getPath = (file) => path.join(DATA_DIR, file);
@@ -20,7 +21,8 @@ const carregarDados = (arquivo) => {
     const p = getPath(arquivo);
     if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify([]));
     try {
-        return JSON.parse(fs.readFileSync(p, 'utf-8') || "[]");
+        const conteudo = fs.readFileSync(p, 'utf-8');
+        return JSON.parse(conteudo || "[]");
     } catch (e) { return []; }
 };
 
@@ -81,6 +83,13 @@ app.post('/consultar', (req, res) => {
     }
 });
 
+app.post('/enviar-sugestao', (req, res) => {
+    let s = carregarDados('sugestoes.json');
+    s.unshift({ id: Date.now(), ...req.body, data: new Date().toLocaleString('pt-PT') });
+    salvarDados('sugestoes.json', s);
+    res.send("<script>alert('Obrigado pela sugestão!'); window.location='/';</script>");
+});
+
 // --- 6. LOGIN E ACESSOS ---
 app.get('/login', (req, res) => res.render('login'));
 
@@ -88,11 +97,12 @@ app.post('/login', (req, res) => {
     const { usuario, senha } = req.body;
     const users = carregarDados('usuarios.json');
     const user = users.find(u => u.usuario === usuario && u.senha === senha);
+    
     if (user) {
         req.session.user = user;
         return res.redirect(user.tipo === 'registador' ? '/meus-registos' : '/admin-dashboard');
     }
-    res.send("<script>alert('Credenciais inválidas!'); window.location='/login';</script>");
+    res.send("<script>alert('Credenciais inválidas! Verifica o utilizador e a senha.'); window.location='/login';</script>");
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
@@ -126,7 +136,8 @@ app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos')
 app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
     let j = carregarDados('jovens.json');
     const novo = { ...req.body, id: Date.now(), dataRegistro: new Date().toLocaleDateString('pt-PT'), registadoPor: req.session.user.nome };
-    j.push(novo); salvarDados('jovens.json', j);
+    j.push(novo); 
+    salvarDados('jovens.json', j);
     res.redirect(req.session.user.tipo === 'registador' ? '/meus-registos' : '/admin-lista');
 });
 
@@ -138,7 +149,10 @@ app.get('/editar/:id', permitirGestao, (req, res) => {
 app.post('/atualizar-jovem/:id', permitirGestao, (req, res) => {
     let j = carregarDados('jovens.json');
     const index = j.findIndex(i => i.id == req.params.id);
-    if (index !== -1) { j[index] = { ...j[index], ...req.body }; salvarDados('jovens.json', j); }
+    if (index !== -1) { 
+        j[index] = { ...j[index], ...req.body }; 
+        salvarDados('jovens.json', j); 
+    }
     res.redirect('/admin-lista');
 });
 
@@ -152,8 +166,9 @@ app.get('/eliminar/:id', apenasCoordenador, (req, res) => {
 app.post('/adicionar-financa', permitirGestao, (req, res) => {
     let f = carregarDados('financas.json');
     const nova = { id: Date.now(), ...req.body, data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
-    f.unshift(nova); salvarDados('financas.json', f);
-    const msg = `*RECIBO CPPJ*\nConfirmamos o recebimento de *${nova.valor} Kz* de *${nova.jovem}*.`;
+    f.unshift(nova); 
+    salvarDados('financas.json', f);
+    const msg = `*RECIBO CPPJ*\nRecebemos *${nova.valor} Kz* de *${nova.jovem}*.`;
     res.send(`<script>window.open('https://wa.me{nova.telefone}?text=${encodeURIComponent(msg)}', '_blank'); window.location='/admin-dashboard';</script>`);
 });
 
@@ -165,15 +180,21 @@ app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
 });
 
 // --- 10. GESTÃO DE ACESSOS E AUDITORIA ---
-app.get('/acessos', apenasCoordenador, (req, res) => res.render('acessos', { usuarios: carregarDados('usuarios.json') }));
+app.get('/acessos', apenasCoordenador, (req, res) => {
+    res.render('acessos', { usuarios: carregarDados('usuarios.json') });
+});
 
 app.post('/criar-acesso', apenasCoordenador, (req, res) => {
-    let u = carregarDados('usuarios.json'); u.push({ id: Date.now(), ...req.body }); salvarDados('usuarios.json', u);
+    let u = carregarDados('usuarios.json'); 
+    u.push({ id: Date.now(), ...req.body }); 
+    salvarDados('usuarios.json', u);
     res.redirect('/acessos');
 });
 
-app.get('/historico-auditoria', apenasCoordenador, (req, res) => res.render('historico_auditoria', { logs: carregarDados('auditoria.json'), user: req.session.user }));
+app.get('/historico-auditoria', apenasCoordenador, (req, res) => {
+    res.render('historico_auditoria', { logs: carregarDados('auditoria.json'), user: req.session.user });
+});
 
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online (Pasta DATA) na porta ${PORT}`));
