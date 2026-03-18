@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Membro - CPPJ Cangamba</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root {
+            --azul-master: #0f172a;
+            --dourado: #fbbf24;
+            --azul-card: rgba(30, 41, 59, 0.7);
+            --branco: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            color: var(--branco);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        .form-card {
+            background: var(--azul-card);
+            backdrop-filter: blur(15px);
+            width: 100%; max-width: 850px;
+            border-radius: 30px; overflow: hidden;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        .header-form { 
+            text-align: center; padding: 30px; 
+            border-bottom: 1px solid rgba(251, 191, 36, 0.1); 
+            background: rgba(0,0,0,0.2);
+        }
+
+        .form-content { padding: 40px; }
+
+        .grid-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .campo-full { width: 100%; margin-bottom: 20px; }
+
+        label { 
+            display: block; font-weight: 600; font-size: 0.75rem; 
+            color: var(--dourado); margin-bottom: 8px; 
+            text-transform: uppercase; letter-spacing: 1px; 
+        }
+        
+        input, select {
+            width: 100%; padding: 14px; border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 12px; background: rgba(15, 23, 42, 0.8);
+            color: white; font-size: 0.95rem; outline: none; box-sizing: border-box;
+        }
+        input:focus { border-color: var(--dourado); background: rgba(15, 23, 42, 1); }
+
+        .btn-group { margin-top: 30px; display: flex; gap: 20px; justify-content: flex-end; }
+        
+        .btn { 
+            padding: 15px 40px; border-radius: 15px; border: none; 
+            font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; 
+            text-decoration: none; display: flex; align-items: center; gap: 10px;
+        }
+        
+        .btn-salvar { background: #22c55e; color: white; }
+        .btn-cancelar { background: rgba(255,255,255,0.1); color: white; }
+        
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+        /* Indicador de ID */
+        .badge-id { 
+            background: var(--dourado); color: var(--azul-master); 
+            padding: 4px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 800; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <div class="header-form">
+        <h2 style="margin:0; letter-spacing: 2px; font-weight: 800; text-transform: uppercase;">
+            <i class="fas fa-user-pen" style="color: var(--dourado);"></i> Atualizar Registo
+        </h2>
+        <div style="margin-top: 10px;">
+            <span class="badge-id">ID: <%= j.id %></span>
+        </div>
+    </div>
+
+    <div class="form-content">
+        <!-- O formulário envia para a rota de atualização com o ID específico -->
+        <form action="/atualizar-jovem/<%= j.id %>" method="POST">
+            
+            <!-- DADOS PESSOAIS -->
+            <div class="campo-full">
+                <label>Nome Completo do Jovem</label>
+                <input type="text" name="nome" value="<%= j.nome %>" required placeholder="Insira o nome completo...">
+            </div>
+            
+            <div class="grid-campos">
+                <div>
+                    <label>Nome do Pai</label>
+                    <input type="text" name="nome_pai" value="<%= j.nome_pai || '' %>">
+                </div>
+                <div>
+                    <label>Nome da Mãe</label>
+                    <input type="text" name="nome_mae" value="<%= j.nome_mae || '' %>">
+                </div>
+            </div>
+
+            <div class="grid-campos">
+                <div>
+                    <label>Nº do Bilhete (BI)</label>
+                    <input type="text" name="bi" value="<%= j.bi %>" required>
+                </div>
+                <div>
+                    <label>Telefone / WhatsApp</label>
+                    <input type="text" name="telefone" value="<%= j.telefone %>" required>
+                </div>
+            </div>
+
+            <!-- DADOS PAROQUIAIS -->
+            <div class="grid-campos">
+                <div>
+                    <label>Centro Pastoral</label>
+                    <select name="centro_pastoral">
+                        <% 
+                        const centros = ["São Miguel Alto-Kuito", "São Lucas-Cangombe", "Rainha da Paz", "Santo António-Cassamba", "Coração de Jesus-Muié"];
+                        centros.forEach(centro => { %>
+                            <option value="<%= centro %>" <%= j.centro_pastoral === centro ? 'selected' : '' %>><%= centro %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label>Grupo ou Movimento</label>
+                    <input type="text" name="grupo_movimento" value="<%= j.grupo_movimento || '' %>">
+                </div>
+            </div>
+
+            <div class="grid-campos">
+                <div>
+                    <label>Crismado?</label>
+                    <select name="crismado">
+                        <option value="Não" <%= j.crismado === 'Não' ? 'selected' : '' %>>Não</option>
+                        <option value="Sim" <%= j.crismado === 'Sim' ? 'selected' : '' %>>Sim</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Casado?</label>
+                    <select name="casado">
+                        <option value="Não" <%= j.casado === 'Não' ? 'selected' : '' %>>Não</option>
+                        <option value="Sim (Igreja)" <%= j.casado === 'Sim (Igreja)' ? 'selected' : '' %>>Sim (Igreja)</option>
+                        <option value="Sim (Civil)" <%= j.casado === 'Sim (Civil)' ? 'selected' : '' %>>Sim (Civil)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <a href="/admin-lista" class="btn btn-cancelar">
+                    <i class="fas fa-xmark"></i> CANCELAR
+                </a>
+                <button type="submit" class="btn btn-salvar">
+                    <i class="fas fa-floppy-disk"></i> GUARDAR ALTERAÇÕES
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

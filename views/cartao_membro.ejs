@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passe CPPJ - <%= j.nome %></title>
+    
+    <!-- Ícones Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root {
+            --azul-escuro: #1c2742;
+            --dourado: #d4af37;
+        }
+
+        body { 
+            background: #f0f0f0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0;
+        }
+        
+        /* --- ESTRUTURA DO CARTÃO --- */
+        .cartao {
+            width: 450px; 
+            height: 280px;
+            background: linear-gradient(135deg, var(--azul-escuro) 0%, #0a0e1a 100%);
+            border: 3px solid var(--dourado); 
+            border-radius: 15px;
+            padding: 20px; 
+            color: white; 
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        /* --- CABEÇALHO OFICIAL --- */
+        .header-cartao { 
+            text-align: center; 
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4); 
+            padding-bottom: 8px; 
+            margin-bottom: 15px; 
+        }
+        .diocese { font-size: 0.8rem; letter-spacing: 2px; color: var(--dourado); font-weight: bold; display: block; }
+        .paroquia { font-size: 0.6rem; margin: 2px 0; display: block; text-transform: uppercase; }
+        .comissao { font-size: 0.65rem; font-weight: 800; color: #fff; display: block; margin-top: 2px; }
+
+        /* --- CORPO DO CARTÃO --- */
+        .corpo { display: flex; gap: 20px; position: relative; z-index: 1; }
+        
+        .foto-box { 
+            width: 100px; 
+            height: 125px; 
+            border: 2px solid var(--dourado); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: #000;
+            overflow: hidden;
+        }
+        .foto-box img { width: 100%; height: 100%; object-fit: cover; }
+        .foto-box i { color: var(--dourado); opacity: 0.3; }
+        
+        .dados { flex: 1; }
+        .campo { margin-bottom: 10px; }
+        .label { font-size: 0.55rem; color: var(--dourado); text-transform: uppercase; font-weight: bold; }
+        .valor { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
+
+        /* --- RODAPÉ --- */
+        .footer-cartao { 
+            position: absolute; 
+            bottom: 12px; 
+            left: 20px; 
+            right: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-end;
+        }
+        
+        .assinatura-box { text-align: center; }
+        .linha-assinatura { width: 130px; border-top: 1px solid white; margin-bottom: 3px; }
+        .cargo-assinatura { font-size: 0.45rem; color: #aaa; text-transform: uppercase; }
+
+        .id-membro { font-size: 0.5rem; color: var(--dourado); font-family: monospace; }
+        
+        /* --- BOTÃO DE IMPRESSÃO --- */
+        .btn-print { 
+            margin-top: 30px; 
+            padding: 12px 35px; 
+            background: var(--azul-escuro); 
+            color: white; 
+            border: 2px solid var(--dourado); 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-print:hover { background: var(--dourado); color: var(--azul-escuro); transform: scale(1.05); }
+
+        /* --- REGRAS DE IMPRESSÃO --- */
+        @media print { 
+            .btn-print { display: none; } 
+            body { background: white; } 
+            .cartao { 
+                box-shadow: none; 
+                -webkit-print-color-adjust: exact; 
+                margin: auto;
+            } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cartao">
+        <!-- CABEÇALHO SOLICITADO PELO ELIAS -->
+        <div class="header-cartao">
+            <span class="diocese">DIOCESE DE LWENA</span>
+            <span class="paroquia">PARÓQUIA DE NOSSA SENHORA RAINHA DA PAZ - CANGAMBA</span>
+            <span class="comissao">COMISSÃO PAROQUIAL DA PASTORAL JUVENIL</span>
+        </div>
+
+        <div class="corpo">
+            <!-- BOX DA FOTO COM PRÉ-VISUALIZAÇÃO -->
+            <div class="foto-box">
+                <% if (typeof fotoEnviada !== 'undefined' && fotoEnviada) { %>
+                    <img src="<%= fotoEnviada %>" alt="Foto do Membro">
+                <% } else { %>
+                    <div style="text-align:center;">
+                        <i class="fas fa-user fa-3x"></i><br>
+                        <span style="font-size: 0.5rem; color:var(--dourado);">SEM FOTO</span>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- DADOS DO JOVEM -->
+            <div class="dados">
+                <div class="campo">
+                    <div class="label">Nome Completo</div>
+                    <div class="valor"><%= j.nome.toUpperCase() %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">B.I. / Identidade</div>
+                    <div class="valor"><%= j.bi %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Grupo / Movimento</div>
+                    <div class="valor"><%= j.grupo_movimento || 'NÃO INFORMADO' %></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RODAPÉ E ASSINATURA -->
+        <div class="footer-cartao">
+            <div class="id-membro">REGISTO: <%= j.id %></div>
+            <div class="assinatura-box">
+                <div class="linha-assinatura"></div>
+                <div class="cargo-assinatura">A COORDENAÇÃO</div>
+            </div>
+            <div style="font-size: 0.5rem; color: #888;">
+                DATA: <%= new Date().toLocaleDateString('pt-PT') %>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÃO QUE NÃO APARECE NA IMPRESSÃO -->
+    <button class="btn-print" onclick="window.print()">
+        <i class="fas fa-print"></i> IMPRIMIR PASSE OFICIAL
+    </button>
+
+</body>
+</html>

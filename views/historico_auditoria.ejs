@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditoria - CPPJ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; padding: 40px; }
+        .log-container { max-width: 900px; margin: auto; background: rgba(30, 41, 59, 0.7); padding: 30px; border-radius: 20px; border: 1px solid #334155; }
+        .log-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; }
+        .log-user { color: #fbbf24; font-weight: bold; }
+        .log-acao { color: #ef4444; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
+        .btn-voltar { color: #fbbf24; text-decoration: none; margin-bottom: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="log-container">
+        <a href="/admin-dashboard" class="btn-voltar"><i class="fas fa-arrow-left"></i> Voltar</a>
+        <h2 style="margin-top:0;"><i class="fas fa-shield-halved"></i> Histórico de Segurança</h2>
+        <% logs.forEach(log => { %>
+            <div class="log-item">
+                <div>
+                    <span class="log-user"><%= log.usuario %></span> <br>
+                    <small><%= log.detalhe %></small>
+                </div>
+                <div style="text-align: right;">
+                    <span class="log-acao"><%= log.acao %></span> <br>
+                    <small style="opacity: 0.5;"><%= log.data %></small>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</body>
+</html>

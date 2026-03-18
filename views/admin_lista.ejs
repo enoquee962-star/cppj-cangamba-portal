@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Geral de Jovens - CPPJ Cangamba</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root {
+            --azul-master: #0f172a;
+            --dourado: #fbbf24;
+            --azul-card: rgba(30, 41, 59, 0.8);
+            --branco: #f8fafc;
+            --perigo: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            color: var(--branco);
+            margin: 0; padding: 30px; min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: auto; }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+            padding-bottom: 20px;
+        }
+
+        .btn-voltar {
+            text-decoration: none; color: var(--dourado); font-weight: 800;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .btn-voltar:hover { transform: translateX(-5px); color: white; }
+
+        /* BARRA DE PESQUISA */
+        .busca-container { margin-bottom: 25px; position: relative; }
+        .busca-container input {
+            width: 100%; padding: 15px 50px; border-radius: 15px;
+            background: var(--azul-card); border: 1px solid rgba(255,255,255,0.1);
+            color: white; font-size: 1rem; outline: none; transition: 0.3s;
+        }
+        .busca-container i { position: absolute; left: 20px; top: 18px; color: var(--dourado); }
+        .busca-container input:focus { border-color: var(--dourado); box-shadow: 0 0 15px rgba(251,191,36,0.2); }
+
+        /* TABELA PREMIUM */
+        .tabela-wrapper {
+            background: var(--azul-card); backdrop-filter: blur(10px);
+            border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: rgba(0,0,0,0.3); color: var(--dourado);
+            text-align: left; padding: 20px; font-size: 0.7rem; text-transform: uppercase;
+            letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .badge-centro {
+            background: rgba(251, 191, 36, 0.1); color: var(--dourado);
+            padding: 5px 12px; border-radius: 50px; font-size: 0.65rem; font-weight: 800;
+        }
+
+        /* ACÇÕES */
+        .acoes { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-acao {
+            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; text-decoration: none; transition: 0.3s; font-size: 0.9rem;
+        }
+        .btn-edit { background: rgba(251, 191, 36, 0.1); color: var(--dourado); }
+        .btn-edit:hover { background: var(--dourado); color: var(--azul-master); }
+        
+        .btn-pass { background: rgba(255, 255, 255, 0.1); color: white; }
+        .btn-pass:hover { background: white; color: var(--azul-master); }
+
+        .btn-del { background: rgba(239, 68, 68, 0.1); color: var(--perigo); }
+        .btn-del:hover { background: var(--perigo); color: white; }
+
+        .contador { font-size: 0.7rem; font-weight: 800; color: #64748b; margin-top: 15px; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h2 style="margin:0; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 15px;">
+                <i class="fas fa-address-book" style="color: var(--dourado);"></i> Lista Geral de Membros
+            </h2>
+            <a href="/admin-dashboard" class="btn-voltar"><i class="fas fa-chevron-left"></i> Painel Administrativo</a>
+        </header>
+
+        <!-- Barra de Pesquisa Dinâmica -->
+        <div class="busca-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="inputBusca" placeholder="Pesquisar por Nome, BI ou Centro Pastoral..." onkeyup="filtrarTabela()">
+        </div>
+
+        <div class="tabela-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>B.I. / Identidade</th>
+                        <th>Telefone</th>
+                        <th>Centro Pastoral</th>
+                        <th style="text-align: right;">Gestão</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    <% if (jovens.length > 0) { %>
+                        <% jovens.forEach(j => { %>
+                            <tr class="linha-jovem">
+                                <td><strong style="color: white;"><%= j.nome.toUpperCase() %></strong></td>
+                                <td><code style="color: #94a3b8;"><%= j.bi %></code></td>
+                                <td><%= j.telefone %></td>
+                                <td><span class="badge-centro"><%= j.centro_pastoral %></span></td>
+                                <td class="acoes">
+                                    <!-- Botão de Passe -->
+                                    <a href="/emitir-passe/<%= j.id %>" class="btn-acao btn-pass" title="Emitir Passe Oficial">
+                                        <i class="fas fa-id-card"></i>
+                                    </a>
+                                    
+                                    <!-- Botão de Editar -->
+                                    <a href="/editar/<%= j.id %>" class="btn-acao btn-edit" title="Editar Dados">
+                                        <i class="fas fa-user-pen"></i>
+                                    </a>
+
+                                    <!-- Botão de Eliminar (Só Coordenador) -->
+                                    <% if (user.tipo === 'coordenador') { %>
+                                        <a href="/eliminar/<%= j.id %>" class="btn-acao btn-del" title="Eliminar Registo" onclick="return confirm('ATENÇÃO: Eliminar permanentemente o registo de <%= j.nome %>?')">
+                                            <i class="fas fa-trash-can"></i>
+                                        </a>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 60px; color: #64748b;">
+                                <i class="fas fa-folder-open fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i><br>
+                                Nenhum jovem registado na base de dados de Cangamba.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="contador">
+            TOTAL: <%= jovens.length %> MEMBROS CADASTRADOS
+        </div>
+    </div>
+
+    <!-- Script de Filtro Instantâneo -->
+    <script>
+        function filtrarTabela() {
+            const input = document.getElementById('inputBusca');
+            const filtro = input.value.toLowerCase();
+            const linhas = document.querySelectorAll('.linha-jovem');
+
+            linhas.forEach(linha => {
+                const texto = linha.textContent.toLowerCase();
+                if (texto.includes(filtro)) {
+                    linha.style.display = "";
+                } else {
+                    linha.style.display = "none";
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

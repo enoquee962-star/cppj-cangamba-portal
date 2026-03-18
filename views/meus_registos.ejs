@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Registos - CPPJ Cangamba</title>
+    
+    <!-- Bootstrap e Font Awesome -->
+    <link href="https://cdn.jsdelivr.net" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+
+    <style>
+        :root { 
+            --azul-principal: #1a5276; 
+            --cinza-fundo: #f0f2f5;
+            --vermelho-sair: #e74c3c;
+            --ouro: #d4af37;
+        }
+
+        body { 
+            background-color: var(--cinza-fundo); 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        /* Topo Azul Centralizado */
+        .header-azul {
+            background-color: var(--azul-principal);
+            color: white; 
+            padding: 60px 0 100px 0; 
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .btn-sair-topo {
+            position: absolute; top: 20px; right: 20px;
+            background-color: var(--vermelho-sair);
+            color: white; text-decoration: none; font-size: 0.75rem;
+            font-weight: bold; padding: 8px 20px; border-radius: 30px;
+            transition: 0.3s;
+        }
+        .btn-sair-topo:hover { background-color: #c0392b; transform: scale(1.05); color: white; }
+
+        /* Container Central que sobe no azul */
+        .conteudo-central {
+            max-width: 1000px;
+            margin: -60px auto 50px auto; /* Centraliza horizontalmente */
+            background-color: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* Grupo de Botões Centralizados */
+        .btn-grupo-central {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn-custom {
+            padding: 12px 35px;
+            border-radius: 50px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            border: none;
+        }
+        .btn-custom:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+        /* Tabela Estilizada */
+        .tabela-wrapper {
+            margin-top: 40px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .table thead { background-color: #f8f9fa; }
+        .table th { color: var(--azul-principal); font-size: 0.85rem; text-transform: uppercase; padding: 15px; }
+        .table td { padding: 15px; vertical-align: middle; }
+
+        /* Modal Centralizado */
+        .modal-blur { 
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; 
+            width: 100%; height: 100%; background: rgba(0,0,0,0.7); 
+            backdrop-filter: blur(5px);
+        }
+        .modal-box { 
+            background: white; margin: 10% auto; padding: 30px; width: 400px; 
+            border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); text-align: center;
+        }
+        #boxFoto { 
+            width: 80px; height: 100px; border: 2px dashed #ccc; margin: auto; 
+            display: flex; align-items: center; justify-content: center; background: #fafafa;
+            overflow: hidden;
+        }
+        #boxFoto img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho -->
+    <div class="header-azul">
+        <a href="/logout" class="btn-sair-topo"><i class="fas fa-sign-out-alt"></i> SAIR</a>
+        <h1 class="fw-bold">Olá, <%= user.nome %> ??</h1>
+        <p class="opacity-75">Painel de Registador Paroquial - CPPJ Cangamba</p>
+    </div>
+
+    <!-- Conteúdo Centralizado -->
+    <div class="container">
+        <div class="conteudo-central">
+            
+            <h3 class="fw-bold" style="color: var(--azul-principal);">Os Meus Cadastramentos</h3>
+            <p class="text-muted small">Gerencie aqui os jovens que você registrou no sistema.</p>
+
+            <!-- Botões Principais no Centro -->
+            <div class="btn-grupo-central">
+                <button onclick="abrirModal('modalPasse')" class="btn btn-warning btn-custom text-dark">
+                    <i class="fas fa-id-card me-2"></i> Emitir Passe
+                </button>
+                <a href="/cadastro" class="btn btn-success btn-custom">
+                    <i class="fas fa-plus me-2"></i> Novo Registo
+                </a>
+            </div>
+
+            <!-- Tabela de Dados -->
+            <div class="tabela-wrapper">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nome do Jovem</th>
+                            <th>Identidade / BI</th>
+                            <th>Centro Pastoral</th>
+                            <th>Data de Registo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (jovens.length > 0) { %>
+                            <% jovens.forEach(j => { %>
+                            <tr>
+                                <td class="fw-bold text-dark"><%= j.nome.toUpperCase() %></td>
+                                <td><%= j.bi %> <br> <small class="text-muted"><%= j.telefone %></small></td>
+                                <td><span class="badge bg-secondary rounded-pill px-3"><%= j.centro_pastoral || 'Sede' %></span></td>
+                                <td class="text-muted"><%= j.dataRegistro %></td>
+                            </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="py-5 text-center text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                                    Ainda não realizou nenhum cadastramento.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Janela de Passe (Modal) -->
+    <div id="modalPasse" class="modal-blur">
+        <div class="modal-box">
+            <h4 class="fw-bold mb-3" style="color: var(--azul-principal);">Gerar Passe Oficial</h4>
+            <form action="/gerar-passe" method="POST" enctype="multipart/form-data">
+                <input type="text" name="termo" class="form-control mb-3" placeholder="BI ou Telefone do Jovem" required>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+                    <div id="boxFoto" class="mb-2"><i class="fas fa-camera opacity-25 fa-2x"></i></div>
+                    <label for="inputFoto" class="btn btn-sm btn-outline-primary fw-bold">
+                        <i class="fas fa-upload me-1"></i> Selecionar Foto 3x4
+                    </label>
+                    <input type="file" id="inputFoto" name="foto" accept="image/*" style="display:none;" required>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">GERAR AGORA</button>
+                    <button type="button" onclick="fecharModal('modalPasse')" class="btn btn-light border w-100 py-2">CANCELAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts de Funcionamento -->
+    <script src="https://cdn.jsdelivr.net"></script>
+    <script>
+        function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Pré-visualização Instantânea da Foto
+        document.getElementById('inputFoto').addEventListener('change', function(e) {
+            const leitor = new FileReader();
+            leitor.onload = function() {
+                document.getElementById('boxFoto').innerHTML = `<img src="${leitor.result}">`;
+            }
+            if(e.target.files[0]) leitor.readAsDataURL(e.target.files[0]);
+        });
+    </script>
+</body>
+</html>

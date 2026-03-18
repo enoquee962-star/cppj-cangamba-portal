@@ -1,0 +1,260 @@
+﻿<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controlo - CPPJ Cangamba</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+
+    <style>
+        :root {
+            --azul-master: #0f172a;
+            --azul-card: rgba(30, 41, 59, 0.7);
+            --dourado: #fbbf24;
+            --branco: #f8fafc;
+            --perigo: #ef4444;
+            --sucesso: #22c55e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--branco);
+            margin: 0; padding: 40px 20px; min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1200px; margin: auto; }
+
+        /* CABEÇALHO PREMIUM */
+        .header-premium { text-align: center; margin-bottom: 40px; position: relative; }
+        .profile-img { width: 90px; height: 90px; border: 3px solid var(--dourado); border-radius: 50%; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); margin-bottom: 15px; object-fit: cover; }
+        .btn-logout { position: absolute; top: 0; right: 0; color: #ff7675; text-decoration: none; font-weight: bold; font-size: 0.7rem; border: 1px solid #ff7675; padding: 8px 15px; border-radius: 50px; transition: 0.3s; }
+        .btn-logout:hover { background: #ff7675; color: white; }
+
+        /* ESTATÍSTICAS */
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .stat-item:hover { transform: translateY(-5px); border-color: var(--dourado); }
+        .stat-item i { color: var(--dourado); display: block; font-size: 1.5rem; margin-bottom: 10px; }
+        .stat-item span { font-size: 1.4rem; font-weight: 800; display: block; }
+        .stat-item label { font-size: 0.65rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+
+        /* MENU PRINCIPAL */
+        .grid-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card-link {
+            background: var(--azul-card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            padding: 25px 10px; border-radius: 20px; text-decoration: none; color: white; text-align: center; transition: 0.3s;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .card-link:hover { transform: translateY(-5px); border-color: var(--dourado); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card-link i { font-size: 1.8rem; color: var(--dourado); }
+        .card-link span { font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; }
+
+        /* ÁREA FINANCEIRA DINÂMICA */
+        .toggle-section { text-align: center; margin-bottom: 30px; }
+        .btn-toggle { background: none; border: 2px solid var(--dourado); color: var(--dourado); padding: 12px 30px; border-radius: 50px; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.3s; }
+        .btn-toggle:hover { background: var(--dourado); color: var(--azul-master); }
+
+        .gestao-grid { display: none; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .data-box { background: rgba(15, 23, 42, 0.8); border-radius: 22px; padding: 20px; border: 1px solid rgba(251, 191, 36, 0.1); }
+        .scroll-area { max-height: 300px; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
+        
+        .item-gestao { 
+            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; 
+            margin-bottom: 10px; display: flex; justify-content: space-between; 
+            align-items: center; border-left: 4px solid var(--dourado); transition: 0.2s;
+        }
+        .item-gestao:hover { background: rgba(255,255,255,0.07); }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 9999; }
+        .modal-content { background: #1e293b; width: 95%; max-width: 400px; margin: 5% auto; padding: 30px; border-radius: 25px; border: 1px solid var(--dourado); }
+        input, select { width: 100%; padding: 14px; margin-bottom: 15px; background: #0f172a; border: 1px solid #333; border-radius: 10px; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--dourado); }
+        .btn-acao { background: var(--dourado); color: var(--azul-master); border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+
+        /* SCROLLBAR CUSTOM */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--dourado); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- CABEÇALHO -->
+        <div class="header-premium">
+            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> SAIR</a>
+            <img src="/jovens.jpg" class="profile-img" onerror="this.src='https://via.placeholder.com'">
+            <h1 style="font-weight: 800; margin: 5px 0;"><%= user.nome %></h1>
+            <p style="color: var(--dourado); letter-spacing: 2px; font-size: 0.65rem; text-transform: uppercase;">
+                <%= user.tipo %> - CPPJ CANGAMBA
+            </p>
+        </div>
+
+        <!-- BARRA DE ESTATÍSTICAS -->
+        <div class="stats-bar">
+            <div class="stat-item"><i class="fas fa-users"></i><span><%= stats.crismados + stats.naoCrismados %></span><label>Total Membros</label></div>
+            <div class="stat-item"><i class="fas fa-dove"></i><span><%= stats.crismados %></span><label>Crismados</label></div>
+            <div class="stat-item"><i class="fas fa-venus-mars"></i><span><%= stats.feminino %>F / <%= stats.masculino %>M</span><label>Género</label></div>
+            <div class="stat-item" style="border-color: var(--perigo);">
+                <i class="fas fa-triangle-exclamation" style="color: var(--perigo);"></i>
+                <span><%= devedores_lista.length %></span>
+                <label>Pendentes Quota</label>
+            </div>
+        </div>
+
+        <!-- MENU DE ACÇÕES -->
+        <div class="grid-menu">
+            <a href="/cadastro" class="card-link"><i class="fas fa-user-plus"></i><span>Novo Registo</span></a>
+            <a href="/admin-lista" class="card-link"><i class="fas fa-address-book"></i><span>Lista Geral</span></a>
+            <div onclick="abrirModal('modalFinancas')" class="card-link"><i class="fas fa-sack-dollar"></i><span>Tesouraria</span></div>
+            <a href="/relatorio-financeiro" target="_blank" class="card-link"><i class="fas fa-file-pdf"></i><span>Relatório</span></a>
+            <div onclick="abrirModal('modalPasse')" class="card-link"><i class="fas fa-id-card"></i><span>Emitir Passe</span></div>
+            
+            <% if (user.tipo === 'coordenador') { %>
+                <a href="/acessos" class="card-link"><i class="fas fa-user-shield"></i><span>Gestão Acessos</span></a>
+                <a href="/historico-auditoria" class="card-link" style="border-color: #64748b;">
+                    <i class="fas fa-list-check" style="color: #64748b;"></i><span>Histórico</span>
+                </a>
+            <% } %>
+        </div>
+
+        <!-- BOTÃO DE VISIBILIDADE -->
+        <div class="toggle-section">
+            <button onclick="toggleTesouraria()" class="btn-toggle" id="btnToggle">
+                <i class="fas fa-eye"></i> EXIBIR DADOS FINANCEIROS
+            </button>
+        </div>
+
+        <!-- ÁREA DE DADOS (FINANÇAS) -->
+        <div class="gestao-grid" id="areaFinanceira">
+            
+            <!-- LISTA DE DEVEDORES -->
+            <div class="data-box" style="border-top: 4px solid var(--perigo);">
+                <h3 style="color: var(--perigo); font-size: 0.8rem; margin:0;"><i class="fas fa-clock"></i> QUOTAS EM FALTA (Mês Atual)</h3>
+                <div class="scroll-area">
+                    <% if (devedores_lista.length > 0) { %>
+                        <% devedores_lista.forEach(dev => { %>
+                            <div class="item-gestao" style="border-left-color: var(--perigo);">
+                                <div>
+                                    <small style="display:block; font-weight:bold; text-transform: uppercase;"><%= dev.nome %></small>
+                                    <small style="font-size:0.6rem; color:#94a3b8;"><%= dev.centro_pastoral %></small>
+                                </div>
+                                <a href="https://wa.me<%= dev.telefone %>" target="_blank" style="color:var(--sucesso); font-size: 1.2rem;">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p style="font-size:0.7rem; opacity:0.5; text-align:center;">Tudo em dia!</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- ÚLTIMAS ENTRADAS FINANCEIRAS -->
+            <div class="data-box" style="border-top: 4px solid var(--sucesso);">
+                <h3 style="color: var(--sucesso); font-size: 0.8rem; margin:0;"><i class="fas fa-receipt"></i> ÚLTIMAS ENTRADAS</h3>
+                <div class="scroll-area">
+                    <% if (financas_lista && financas_lista.length > 0) { %>
+                        <% financas_lista.forEach(f => { %>
+                            <div class="item-gestao" style="border-left-color: var(--sucesso)">
+                                <div>
+                                    <small style="display:block; font-weight:bold; text-transform: uppercase;"><%= f.jovem %></small>
+                                    <small style="font-size:0.6rem; color:#94a3b8;"><%= f.tipo %> - <%= f.valor %> Kz</small>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <small style="font-size:0.55rem; color:#64748b;"><%= f.data %></small>
+                                    <% if (user.tipo === 'coordenador') { %>
+                                        <a href="/eliminar-financa/<%= f.id %>" onclick="return confirm('Eliminar este registo financeiro?')" style="color: var(--perigo); font-size: 0.8rem;">
+                                            <i class="fas fa-trash-can"></i>
+                                        </a>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p style="font-size:0.7rem; opacity:0.5; text-align:center;">Sem registos recentes.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL TESOURARIA -->
+    <div id="modalFinancas" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--dourado); margin-top:0; font-size: 1.2rem;">Registar Pagamento</h2>
+            <form action="/adicionar-financa" method="POST">
+                <input type="text" name="jovem" list="listaJovens" placeholder="Nome do Jovem" required>
+                <datalist id="listaJovens">
+                    <% devedores_lista.forEach(j => { %> <option value="<%= j.nome %>"> <% }) %>
+                </datalist>
+                <input type="number" name="valor" placeholder="Valor em Kz" required>
+                <input type="text" name="telefone" placeholder="Telefone (WhatsApp)" required>
+                <select name="tipo">
+                    <option value="Quota Mensal">Quota Mensal</option>
+                    <option value="Cartão de Membro">Cartão de Membro</option>
+                    <option value="Inscrição">Inscrição Evento</option>
+                    <option value="Donativo">Donativo</option>
+                </select>
+                <button type="submit" class="btn-acao">Confirmar e Notificar</button>
+                <button type="button" onclick="fecharModais()" style="background:none; border:none; color:#888; width:100%; margin-top:15px; cursor:pointer; font-size: 0.7rem;">CANCELAR</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EMISSÃO PASSE -->
+    <div id="modalPasse" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--dourado); margin-top:0; font-size: 1.2rem;">Gerar Passe Oficial</h2>
+            <form action="/gerar-passe" method="POST" enctype="multipart/form-data">
+                <div id="previaFoto" style="width: 80px; height: 100px; background: #0f172a; margin: 0 auto 15px; border: 2px dashed #334155; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <i class="fas fa-camera" style="opacity: 0.2; font-size: 2rem;"></i>
+                </div>
+                <input type="file" name="foto" accept="image/*" onchange="previewImage(event)" required>
+                <input type="text" name="termo" placeholder="BI ou Nome do Membro" required>
+                <button type="submit" class="btn-acao">Gerar Documento</button>
+                <button type="button" onclick="fecharModais()" style="background:none; border:none; color:#888; width:100%; margin-top:15px; cursor:pointer; font-size: 0.7rem;">FECHAR</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleTesouraria() {
+            const area = document.getElementById('areaFinanceira');
+            const btn = document.getElementById('btnToggle');
+            if (area.style.display === 'grid') {
+                area.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-eye"></i> EXIBIR DADOS FINANCEIROS';
+            } else {
+                area.style.display = 'grid';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> OCULTAR DADOS';
+            }
+        }
+
+        function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const previa = document.getElementById('previaFoto');
+                previa.innerHTML = `<img src="${reader.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            }
+            reader.readAsDataURL(event.target.files);
+        }
+
+        window.onclick = function(event) { if (event.target.className === 'modal') fecharModais(); }
+    </script>
+
+</body>
+</html>

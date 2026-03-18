@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Membro - CPPJ Cangamba</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root { --azul: #1c2742; --dourado: #d4af37; --fundo: #f4f7f6; --texto: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--fundo); margin: 0; padding: 20px; }
+        
+        .ficha-container {
+            max-width: 850px; margin: 20px auto; background: white;
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden; border-top: 8px solid var(--dourado);
+        }
+
+        .header-ficha { background: var(--azul); color: white; padding: 35px; text-align: center; }
+        .header-ficha h2 { margin: 5px 0; letter-spacing: 4px; text-transform: uppercase; font-size: 1.6rem; font-weight: 800; }
+        .header-ficha p { margin: 0; font-size: 0.75rem; opacity: 0.9; letter-spacing: 2px; }
+
+        .corpo-ficha { padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .seccao-titulo {
+            grid-column: span 2; background: #f1f5f9; padding: 12px 20px;
+            border-left: 6px solid var(--dourado); color: var(--azul);
+            font-weight: 800; font-size: 0.8rem; text-transform: uppercase;
+            margin-top: 15px; display: flex; align-items: center; gap: 12px;
+        }
+
+        .campo { margin-bottom: 5px; }
+        .label { font-size: 0.6rem; color: #777; text-transform: uppercase; font-weight: 800; margin-bottom: 2px; }
+        .valor { font-size: 0.95rem; color: var(--texto); font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 4px; min-height: 20px; }
+
+        .footer-ficha { text-align: center; padding: 40px; background: #fff; border-top: 1px solid #eee; }
+        
+        .btn-imprimir {
+            background: var(--azul); color: white; border: none; padding: 15px 40px;
+            border-radius: 50px; cursor: pointer; font-weight: 800; transition: 0.3s;
+            text-decoration: none; display: inline-block; text-transform: uppercase; font-size: 0.8rem;
+        }
+        .btn-imprimir:hover { background: var(--dourado); color: var(--azul); transform: translateY(-2px); }
+
+        @media print { 
+            .btn-imprimir, .footer-ficha { display: none; } 
+            body { background: white; padding: 0; }
+            .ficha-container { box-shadow: none; border: 1px solid #eee; margin: 0; width: 100%; } 
+            .header-ficha { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ficha-container">
+        <% jovens.forEach(j => { %>
+        <div class="header-ficha">
+            <i class="fas fa-church fa-3x" style="color: var(--dourado); margin-bottom: 15px;"></i>
+            <h2>Ficha de Membro Oficial</h2>
+            <p>COMISSÃO PAROQUIAL DA PASTORAL JUVENIL - CANGAMBA</p>
+        </div>
+
+        <div class="corpo-ficha">
+            <!-- 1. IDENTIFICAÇÃO -->
+            <div class="seccao-titulo"><i class="fas fa-user"></i> 1. Identificação e Contactos</div>
+            <div class="campo" style="grid-column: span 2;">
+                <div class="label">Nome Completo</div>
+                <div class="valor"><%= j.nome.toUpperCase() %></div>
+            </div>
+            <div class="campo">
+                <div class="label">B.I. / Identidade</div>
+                <div class="valor"><%= j.bi %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Telefone / WhatsApp</div>
+                <div class="valor"><%= j.telefone %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Natural de</div>
+                <div class="valor"><%= j.natural %> (<%= j.provincia %>)</div>
+            </div>
+            <div class="campo">
+                <div class="label">Município Atual</div>
+                <div class="valor"><%= j.municipio %></div>
+            </div>
+
+            <!-- 2. VIDA RELIGIOSA -->
+            <div class="seccao-titulo"><i class="fas fa-cross"></i> 2. Vida Religiosa e Capelania</div>
+            <div class="campo">
+                <div class="label">Centro Pastoral</div>
+                <div class="valor"><%= j.centro_pastoral %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Capela / Comunidade</div>
+                <div class="valor"><%= j.capela || 'Sede Paroquial' %></div>
+            </div>
+            <div class="campo" style="grid-column: span 2;">
+                <div class="label">Grupo ou Movimento</div>
+                <div class="valor"><%= j.grupo_movimento %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Sacramentos</div>
+                <div class="valor">Batizado: <%= j.batizado %> | Crisma: <%= j.crismado %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Estado Civil (Igreja)</div>
+                <div class="valor"><%= j.casado %></div>
+            </div>
+
+            <!-- 3. VIDA PROFISSIONAL (ACTUALIZADO) -->
+            <div class="seccao-titulo"><i class="fas fa-briefcase"></i> 3. Dados Profissionais e Académicos</div>
+            <div class="campo">
+                <div class="label">Nível Académico</div>
+                <div class="valor"><%= j.nivel_academico %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Curso / Área de Formação</div>
+                <div class="valor"><%= j.curso %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Sector de Actividade</div>
+                <div class="valor"><%= j.sector_trabalho %></div>
+            </div>
+            <div class="campo">
+                <div class="label">Funcionário?</div>
+                <div class="valor"><%= j.funcionario %></div>
+            </div>
+            <div class="campo" style="grid-column: span 2;">
+                <div class="label">Cursos Complementares / Habilidades</div>
+                <div class="valor"><%= j.cursos_complementares %></div>
+            </div>
+
+            <!-- ASSINATURA -->
+            <div style="grid-column: span 2; text-align: center; margin-top: 40px;">
+                <p>________________________________________________</p>
+                <p style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Assinatura do Membro / Secretaria</p>
+                <p style="font-size: 0.6rem; color: #888;">Cangamba, <%= new Date().toLocaleDateString('pt-PT') %></p>
+            </div>
+        </div>
+        <% }) %>
+
+        <div class="footer-ficha">
+            <button onclick="window.print()" class="btn-imprimir">
+                <i class="fas fa-print"></i> Imprimir Ficha de Membro
+            </button>
+            <p style="margin-top: 20px;"><a href="/admin-dashboard" style="color: var(--azul); font-weight: bold; text-decoration: none; font-size: 0.8rem;">VOLTAR AO PAINEL</a></p>
+        </div>
+    </div>
+
+</body>
+</html>

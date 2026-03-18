@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Registo - CPPJ Cangamba</title>
+    
+    <!-- Font Awesome para os ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root {
+            --azul-master: #0f172a;
+            --dourado: #fbbf24;
+            --branco: #f8fafc;
+            --cinza: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--branco);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        .form-container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(15px);
+            width: 100%; max-width: 650px;
+            border-radius: 25px; padding: 40px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        /* --- BARRA DE PROGRESSO --- */
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; }
+        .step-indicator::before { content: ''; position: absolute; top: 17px; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.1); z-index: 1; }
+        .step { width: 35px; height: 35px; background: #1e293b; border: 2px solid var(--cinza); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; z-index: 2; transition: 0.3s; color: var(--cinza); }
+        .step.active { border-color: var(--dourado); color: var(--dourado); background: var(--azul-master); box-shadow: 0 0 15px var(--dourado); }
+
+        /* --- LÓGICA DE PASSOS --- */
+        .step-content { display: none; } /* Esconde por padrão */
+        .step-content.active { display: block; animation: slideIn 0.4s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        h2 { font-size: 1.2rem; color: var(--dourado); margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(251, 191, 36, 0.1); padding-bottom: 10px; }
+        .grid-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        label { display: block; font-size: 0.65rem; font-weight: 600; color: var(--cinza); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: white; outline: none; transition: 0.3s; box-sizing: border-box;
+        }
+        input:focus { border-color: var(--dourado); background: #0f172a; }
+
+        .btn-group { display: flex; gap: 15px; margin-top: 20px; }
+        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-next { background: var(--dourado); color: var(--azul-master); }
+        .btn-prev { background: rgba(255,255,255,0.1); color: white; }
+        .btn-save { background: #22c55e; color: white; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <!-- Indicador Visual de Progresso -->
+    <div class="step-indicator">
+        <div class="step active" id="dot1">1</div>
+        <div class="step" id="dot2">2</div>
+        <div class="step" id="dot3">3</div>
+    </div>
+
+    <form action="/finalizar-cadastro" method="POST">
+        
+        <!-- PÁGINA 1: DADOS PESSOAIS -->
+        <div class="step-content active" id="step1">
+            <h2><i class="fas fa-user-circle"></i> 1. Dados Pessoais</h2>
+            <label>Nome Completo</label>
+            <input type="text" name="nome" placeholder="Insira o nome completo" required>
+            
+            <div class="grid-campos">
+                <div><label>Nome do Pai</label><input type="text" name="nome_pai"></div>
+                <div><label>Nome da Mãe</label><input type="text" name="nome_mae"></div>
+            </div>
+
+            <div class="grid-campos">
+                <div><label>B.I. / Identidade</label><input type="text" name="bi" required></div>
+                <div><label>Natural de</label><input type="text" name="natural"></div>
+            </div>
+
+            <div class="grid-campos">
+                <div><label>Telefone / WhatsApp</label><input type="text" name="telefone" required></div>
+                <div><label>Província</label><input type="text" name="provincia" value="Moxico"></div>
+            </div>
+            
+            <button type="button" class="btn btn-next" onclick="irPara(2)">Próximo Passo <i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <!-- PÁGINA 2: DADOS RELIGIOSOS -->
+        <div class="step-content" id="step2">
+            <h2><i class="fas fa-cross"></i> 2. Dados Religiosos</h2>
+            <div class="grid-campos">
+                <div><label>Diocese</label><input type="text" name="diocese" value="Lwena"></div>
+                <div><label>Paróquia</label><input type="text" name="paroquia" value="Rainha da Paz"></div>
+            </div>
+
+            <div class="grid-campos">
+                <div><label>Centro Pastoral</label><input type="text" name="centro_pastoral" required></div>
+                <div><label>Capela / Comunidade</label><input type="text" name="capela"></div>
+            </div>
+
+            <label>Grupo ou Movimento</label>
+            <input type="text" name="grupo_movimento" placeholder="Ex: Acólitos, Coral, Legião...">
+
+            <div class="grid-campos">
+                <div><label>Batizado?</label><select name="batizado"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                <div><label>Crismado?</label><select name="crismado"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-prev" onclick="irPara(1)">Voltar</button>
+                <button type="button" class="btn btn-next" onclick="irPara(3)">Continuar</button>
+            </div>
+        </div>
+
+        <!-- PÁGINA 3: DADOS PROFISSIONAIS -->
+        <div class="step-content" id="step3">
+            <h2><i class="fas fa-graduation-cap"></i> 3. Dados Profissionais</h2>
+            <div class="grid-campos">
+                <div>
+                    <label>Nível Académico</label>
+                    <select name="nivel_academico">
+                        <option value="Nenhum">Nenhum</option>
+                        <option value="Ensino Médio">Ensino Médio</option>
+                        <option value="Superior (Frequência)">Superior (Frequência)</option>
+                        <option value="Licenciatura">Licenciatura</option>
+                    </select>
+                </div>
+                <div><label>Curso / Área</label><input type="text" name="curso"></div>
+            </div>
+
+            <div class="grid-campos">
+                <div><label>É Funcionário?</label><select name="funcionario"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                <div><label>Sector de Trabalho</label><input type="text" name="sector_trabalho"></div>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-prev" onclick="irPara(2)">Voltar</button>
+                <button type="submit" class="btn btn-save">Finalizar Registo <i class="fas fa-check"></i></button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<!-- JAVASCRIPT PARA CONTROLAR OS PASSOS -->
+<script>
+    function irPara(passo) {
+        // 1. Esconder todos os passos
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // 2. Desativar todos os círculos da barra de progresso
+        document.querySelectorAll('.step').forEach(dot => {
+            dot.classList.remove('active');
+        });
+
+        // 3. Mostrar o passo desejado
+        document.getElementById('step' + passo).classList.add('active');
+
+        // 4. Ativar os círculos até ao passo atual
+        for (let i = 1; i <= passo; i++) {
+            document.getElementById('dot' + i).classList.add('active');
+        }
+    }
+</script>
+
+</body>
+</html>
