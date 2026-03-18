@@ -10,7 +10,6 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // --- 1. CONFIGURAÇÃO DE CAMINHOS (Pasta: data) ---
-// Garante que o Node procura na pasta 'data' que criaste no GitHub
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
@@ -61,7 +60,7 @@ const apenasCoordenador = (req, res, next) => {
     res.send("<script>alert('Acesso Negado!'); window.location='/admin-dashboard';</script>");
 };
 
-// --- 5. PORTAL PÚBLICO E CONSULTA ---
+// --- 5. PORTAL PÚBLICO E CONSULTA (RESOLUÇÃO DO TEU ERRO) ---
 app.get('/', (req, res) => {
     res.render('index', { 
         noticias: carregarDados('noticias.json'),
@@ -70,16 +69,23 @@ app.get('/', (req, res) => {
 });
 
 app.post('/consultar', (req, res) => {
-    const termo = (req.body.termo || "").toLowerCase();
+    const termo = (req.body.termo || "").toLowerCase().trim();
     const jovens = carregarDados('jovens.json');
-    const encontrado = jovens.find(j => 
-        j.nome.toLowerCase().includes(termo) || (j.bi && j.bi.includes(termo))
-    );
+    
+    // Procura por Nome ou BI (Exatamente como o BI que escreveste na foto)
+    const encontrado = jovens.find(j => {
+        const nome = j.nome ? j.nome.toLowerCase() : "";
+        const bi = j.bi ? j.bi.toLowerCase() : "";
+        return nome.includes(termo) || bi === termo;
+    });
 
     if (encontrado) {
-        res.render('ficha_membro', { jovens: [encontrado], user: req.session.user || null });
+        res.render('ficha_membro', { 
+            jovens: [encontrado], 
+            user: req.session.user || null 
+        });
     } else {
-        res.send("<script>alert('Membro não encontrado em Cangamba!'); window.location='/';</script>");
+        res.send("<script>alert('Membro não encontrado em Cangamba! Verifica o BI ou Nome.'); window.location='/';</script>");
     }
 });
 
@@ -102,7 +108,7 @@ app.post('/login', (req, res) => {
         req.session.user = user;
         return res.redirect(user.tipo === 'registador' ? '/meus-registos' : '/admin-dashboard');
     }
-    res.send("<script>alert('Credenciais inválidas! Verifica o utilizador e a senha.'); window.location='/login';</script>");
+    res.send("<script>alert('Credenciais inválidas!'); window.location='/login';</script>");
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
@@ -149,10 +155,7 @@ app.get('/editar/:id', permitirGestao, (req, res) => {
 app.post('/atualizar-jovem/:id', permitirGestao, (req, res) => {
     let j = carregarDados('jovens.json');
     const index = j.findIndex(i => i.id == req.params.id);
-    if (index !== -1) { 
-        j[index] = { ...j[index], ...req.body }; 
-        salvarDados('jovens.json', j); 
-    }
+    if (index !== -1) { j[index] = { ...j[index], ...req.body }; salvarDados('jovens.json', j); }
     res.redirect('/admin-lista');
 });
 
@@ -197,4 +200,4 @@ app.get('/historico-auditoria', apenasCoordenador, (req, res) => {
 
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online (Pasta DATA) na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online na porta ${PORT}`));
