@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Acessos - CPPJ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    <style>
+        :root { --azul: #1c2742; --dourado: #fbbf24; --fundo: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); padding: 30px; }
+        .container { max-width: 900px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--dourado); }
+        h2 { color: var(--azul); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { background: var(--azul); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+        th { background: var(--azul); color: white; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; background: #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin-dashboard" style="text-decoration: none; color: var(--azul); font-weight: bold;">← Voltar ao Painel</a>
+        
+        <div class="card">
+            <h2><i class="fas fa-user-shield"></i> Criar Novo Acesso</h2>
+            <form action="/criar-acesso" method="POST" class="grid">
+                <input type="text" name="nome" placeholder="Nome Completo" required>
+                <input type="text" name="usuario" placeholder="Nome de Utilizador" required>
+                <input type="password" name="senha" placeholder="Senha" required>
+                <select name="tipo">
+                    <option value="registador">Registador</option>
+                    <option value="tesoureiro">Tesoureiro</option>
+                    <option value="assessor">Assessor</option>
+                    <option value="coordenador">Coordenador</option>
+                </select>
+                <button type="submit" class="btn" style="grid-column: span 2;">Criar Acesso</button>
+            </form>
+        </div>
 
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Utilizador</th>
+                    <th>Nível</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (typeof usuarios !== 'undefined' && usuarios.length > 0) { %>
+                    <% usuarios.forEach(u => { %>
+                        <tr>
+                            <td><strong><%= u.nome %></strong></td>
+                            <td><code><%= u.usuario %></code></td>
+                            <td><span class="badge"><%= u.tipo %></span></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
