@@ -32,7 +32,10 @@ const salvarDados = (arquivo, dados) => {
 // --- 3. CONFIGURAÇÕES DO SERVIDOR ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// ATENÇÃO: Esta linha permite que as fotos da pasta 'public' sejam visualizadas
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -60,7 +63,7 @@ const apenasCoordenador = (req, res, next) => {
     res.send("<script>alert('Acesso Negado!'); window.location='/admin-dashboard';</script>");
 };
 
-// --- 5. PORTAL PÚBLICO E CONSULTA (RESOLUÇÃO DO TEU ERRO) ---
+// --- 5. PORTAL PÚBLICO E CONSULTA ---
 app.get('/', (req, res) => {
     res.render('index', { 
         noticias: carregarDados('noticias.json'),
@@ -72,7 +75,6 @@ app.post('/consultar', (req, res) => {
     const termo = (req.body.termo || "").toLowerCase().trim();
     const jovens = carregarDados('jovens.json');
     
-    // Procura por Nome ou BI (Exatamente como o BI que escreveste na foto)
     const encontrado = jovens.find(j => {
         const nome = j.nome ? j.nome.toLowerCase() : "";
         const bi = j.bi ? j.bi.toLowerCase() : "";
@@ -80,12 +82,9 @@ app.post('/consultar', (req, res) => {
     });
 
     if (encontrado) {
-        res.render('ficha_membro', { 
-            jovens: [encontrado], 
-            user: req.session.user || null 
-        });
+        res.render('ficha_membro', { jovens: [encontrado], user: req.session.user || null });
     } else {
-        res.send("<script>alert('Membro não encontrado em Cangamba! Verifica o BI ou Nome.'); window.location='/';</script>");
+        res.send("<script>alert('Membro não encontrado em Cangamba!'); window.location='/';</script>");
     }
 });
 
@@ -165,7 +164,7 @@ app.get('/eliminar/:id', apenasCoordenador, (req, res) => {
     res.redirect('/admin-lista');
 });
 
-// --- 9. TESOURARIA E PASSES ---
+// --- 9. TESOURARIA E RELATÓRIOS ---
 app.post('/adicionar-financa', permitirGestao, (req, res) => {
     let f = carregarDados('financas.json');
     const nova = { id: Date.now(), ...req.body, data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
@@ -175,6 +174,7 @@ app.post('/adicionar-financa', permitirGestao, (req, res) => {
     res.send(`<script>window.open('https://wa.me{nova.telefone}?text=${encodeURIComponent(msg)}', '_blank'); window.location='/admin-dashboard';</script>`);
 });
 
+// --- 10. PASSES E AUDITORIA ---
 app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
     const j = carregarDados('jovens.json').find(i => i.bi === req.body.termo || i.id == req.body.termo);
     const foto = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
@@ -182,22 +182,14 @@ app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
     else res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
 });
 
-// --- 10. GESTÃO DE ACESSOS E AUDITORIA ---
 app.get('/acessos', apenasCoordenador, (req, res) => {
     res.render('acessos', { usuarios: carregarDados('usuarios.json') });
-});
-
-app.post('/criar-acesso', apenasCoordenador, (req, res) => {
-    let u = carregarDados('usuarios.json'); 
-    u.push({ id: Date.now(), ...req.body }); 
-    salvarDados('usuarios.json', u);
-    res.redirect('/acessos');
 });
 
 app.get('/historico-auditoria', apenasCoordenador, (req, res) => {
     res.render('historico_auditoria', { logs: carregarDados('auditoria.json'), user: req.session.user });
 });
 
-// --- INICIALIZAÇÃO DO SERVIDOR ---
+// --- INICIALIZAÇÃO ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Servidor CPPJ na porta ${PORT}`));
