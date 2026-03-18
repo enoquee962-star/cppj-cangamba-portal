@@ -1,9 +1,23 @@
 [
   {
     "id": 1,
-    "nome": "Admin",
+    "nome": "Elias - Coordenador",
     "usuario": "admin",
     "senha": "123",
     "tipo": "coordenador"
+  },
+  {
+    "id": 2,
+    "nome": "Tesoureiro Paroquial",
+    "usuario": "tesouraria",
+    "senha": "456",
+    "tipo": "tesoureiro"
+  },
+  {
+    "id": 3,
+    "nome": "Registador Standard",
+    "usuario": "reg",
+    "senha": "789",
+    "tipo": "registador"
   }
 ]
