@@ -3,63 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Acessos - CPPJ</title>
+    <title>Gestão de Acessos - CPPJ Cangamba</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
     <style>
-        :root { --azul: #1c2742; --dourado: #fbbf24; --fundo: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); padding: 30px; }
-        .container { max-width: 900px; margin: auto; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--dourado); }
-        h2 { color: var(--azul); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-        .btn { background: var(--azul); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th { background: var(--azul); color: white; padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #eee; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; background: #eee; }
+        :root {
+            --azul-master: #0f172a;
+            --azul-card: rgba(30, 41, 59, 0.7);
+            --dourado: #fbbf24;
+            --branco: #f8fafc;
+            --perigo: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--branco);
+            margin: 0; padding: 40px 20px; min-height: 100vh;
+        }
+
+        .container { max-width: 1000px; margin: auto; }
+
+        .btn-voltar { 
+            text-decoration: none; color: var(--dourado); font-weight: 800; 
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 30px; 
+        }
+
+        /* --- FORMULÁRIO DE CADASTRO --- */
+        .card-cadastro { 
+            background: var(--azul-card); backdrop-filter: blur(15px);
+            padding: 35px; border-radius: 25px; border: 1px solid rgba(251, 191, 36, 0.2);
+            margin-bottom: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        
+        h2 { color: var(--dourado); margin-top: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 25px; }
+        
+        input, select { 
+            padding: 14px; background: #0f172a; border: 1px solid #334155; 
+            border-radius: 12px; color: white; outline: none; transition: 0.3s; 
+        }
+        input:focus { border-color: var(--dourado); }
+
+        .btn-criar { 
+            grid-column: span 2; background: var(--dourado); color: var(--azul-master); 
+            border: none; padding: 16px; border-radius: 12px; font-weight: 900; 
+            cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; 
+        }
+        .btn-criar:hover { transform: translateY(-3px); background: white; }
+
+        /* --- TABELA DE UTILIZADORES --- */
+        .tabela-container { 
+            background: var(--azul-card); border-radius: 25px; 
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.05); 
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(0,0,0,0.3); color: var(--dourado); padding: 20px; text-align: left; font-size: 0.7rem; text-transform: uppercase; }
+        td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+
+        /* Badges de Cargo */
+        .badge { padding: 6px 14px; border-radius: 50px; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; }
+        .badge-admin { background: rgba(251, 191, 36, 0.1); color: var(--dourado); border: 1px solid var(--dourado); }
+        .badge-reg { background: rgba(255, 255, 255, 0.1); color: white; }
+
+        .btn-delete { color: var(--perigo); text-decoration: none; font-weight: 800; font-size: 0.8rem; transition: 0.3s; }
+        .btn-delete:hover { opacity: 0.6; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <a href="/admin-dashboard" style="text-decoration: none; color: var(--azul); font-weight: bold;">← Voltar ao Painel</a>
-        
-        <div class="card">
-            <h2><i class="fas fa-user-shield"></i> Criar Novo Acesso</h2>
-            <form action="/criar-acesso" method="POST" class="grid">
-                <input type="text" name="nome" placeholder="Nome Completo" required>
-                <input type="text" name="usuario" placeholder="Nome de Utilizador" required>
-                <input type="password" name="senha" placeholder="Senha" required>
-                <select name="tipo">
-                    <option value="registador">Registador</option>
-                    <option value="tesoureiro">Tesoureiro</option>
-                    <option value="assessor">Assessor</option>
-                    <option value="coordenador">Coordenador</option>
+        <a href="/admin-dashboard" class="btn-voltar"><i class="fas fa-chevron-left"></i> Voltar ao Painel</a>
+
+        <div class="card-cadastro">
+            <h2><i class="fas fa-user-shield"></i> Criar Novo Acesso ao Sistema</h2>
+            <form action="/criar-acesso" method="POST" class="form-grid">
+                <input type="text" name="nome" placeholder="Nome Completo do Responsável" required>
+                <input type="text" name="usuario" placeholder="Utilizador (Login)" required>
+                <input type="password" name="senha" placeholder="Palavra-passe" required>
+                
+                <select name="tipo" required>
+                    <option value="registador">Registador Standard</option>
+                    <option value="tesoureiro">Tesoureiro (Finanças)</option>
+                    <option value="assessor">Assessor Adjunto</option>
+                    <option value="coordenador">Coordenador (Admin)</option>
                 </select>
-                <button type="submit" class="btn" style="grid-column: span 2;">Criar Acesso</button>
+
+                <button type="submit" class="btn-criar">Ativar Acesso Agora</button>
             </form>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Utilizador</th>
-                    <th>Nível</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (typeof usuarios !== 'undefined' && usuarios.length > 0) { %>
+        <div class="tabela-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Responsável</th>
+                        <th>Utilizador</th>
+                        <th>Cargo / Nível</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
                     <% usuarios.forEach(u => { %>
                         <tr>
                             <td><strong><%= u.nome %></strong></td>
                             <td><code><%= u.usuario %></code></td>
-                            <td><span class="badge"><%= u.tipo %></span></td>
+                            <td>
+                                <span class="badge <%= u.tipo === 'coordenador' ? 'badge-admin' : 'badge-reg' %>">
+                                    <%= u.tipo %>
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <% if (u.usuario !== 'admin') { %>
+                                    <a href="/eliminar-acesso/<%= u.usuario %>" class="btn-delete" onclick="return confirm('Eliminar o acesso de <%= u.nome %>?')">
+                                        <i class="fas fa-trash-alt"></i> Eliminar
+                                    </a>
+                                <% } else { %>
+                                    <small style="color:#475569; font-style: italic;">Sistema Root</small>
+                                <% } %>
+                            </td>
                         </tr>
                     <% }) %>
-                <% } %>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
+
 </body>
 </html>
