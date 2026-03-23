@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficha de Membro - CPPJ Cangamba</title>
+    <title>Ficha Oficial de Membro - CPPJ</title>
     
+    <!-- Font Awesome para os √≠cones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
     
     <style>
         :root { --azul: #1c2742; --dourado: #d4af37; --fundo: #f4f7f6; --texto: #333; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--fundo); margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--fundo); margin: 0; padding: 20px; }
         
         .ficha-container {
             max-width: 850px; margin: 20px auto; background: white;
@@ -54,97 +55,94 @@
 <body>
 
     <div class="ficha-container">
-        <% jovens.forEach(j => { %>
-        <div class="header-ficha">
-            <i class="fas fa-church fa-3x" style="color: var(--dourado); margin-bottom: 15px;"></i>
-            <h2>Ficha de Membro Oficial</h2>
-            <p>COMISS√O PAROQUIAL DA PASTORAL JUVENIL - CANGAMBA</p>
-        </div>
-
-        <div class="corpo-ficha">
-            <!-- 1. IDENTIFICA«√O -->
-            <div class="seccao-titulo"><i class="fas fa-user"></i> 1. IdentificaÁ„o e Contactos</div>
-            <div class="campo" style="grid-column: span 2;">
-                <div class="label">Nome Completo</div>
-                <div class="valor"><%= j.nome.toUpperCase() %></div>
-            </div>
-            <div class="campo">
-                <div class="label">B.I. / Identidade</div>
-                <div class="valor"><%= j.bi %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Telefone / WhatsApp</div>
-                <div class="valor"><%= j.telefone %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Natural de</div>
-                <div class="valor"><%= j.natural %> (<%= j.provincia %>)</div>
-            </div>
-            <div class="campo">
-                <div class="label">MunicÌpio Atual</div>
-                <div class="valor"><%= j.municipio %></div>
+        <% if (jovens && jovens.length > 0) { %>
+            <% jovens.forEach(j => { %>
+            <div class="header-ficha">
+                <i class="fas fa-church fa-3x" style="color: var(--dourado); margin-bottom: 15px;"></i>
+                <h2>Ficha de Membro Oficial</h2>
+                <p>COMISS√ÉO PAROQUIAL DA PASTORAL JUVENIL - CANGAMBA</p>
             </div>
 
-            <!-- 2. VIDA RELIGIOSA -->
-            <div class="seccao-titulo"><i class="fas fa-cross"></i> 2. Vida Religiosa e Capelania</div>
-            <div class="campo">
-                <div class="label">Centro Pastoral</div>
-                <div class="valor"><%= j.centro_pastoral %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Capela / Comunidade</div>
-                <div class="valor"><%= j.capela || 'Sede Paroquial' %></div>
-            </div>
-            <div class="campo" style="grid-column: span 2;">
-                <div class="label">Grupo ou Movimento</div>
-                <div class="valor"><%= j.grupo_movimento %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Sacramentos</div>
-                <div class="valor">Batizado: <%= j.batizado %> | Crisma: <%= j.crismado %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Estado Civil (Igreja)</div>
-                <div class="valor"><%= j.casado %></div>
-            </div>
+            <div class="corpo-ficha">
+                <!-- 1. IDENTIFICA√á√ÉO -->
+                <div class="seccao-titulo"><i class="fas fa-user"></i> 1. Identifica√ß√£o e Filia√ß√£o</div>
+                <div class="campo" style="grid-column: span 2;">
+                    <div class="label">Nome Completo</div>
+                    <div class="valor"><%= j.nome ? j.nome.toUpperCase() : 'N√ÉO INFORMADO' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Nome do Pai</div>
+                    <div class="valor"><%= j.nome_pai || 'N√ÉO INFORMADO' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Nome da M√£e</div>
+                    <div class="valor"><%= j.nome_mae || 'N√ÉO INFORMADO' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">B.I. / Identidade</div>
+                    <div class="valor"><%= j.bi || '---' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Telefone / WhatsApp</div>
+                    <div class="valor"><%= j.telefone || '---' %></div>
+                </div>
 
-            <!-- 3. VIDA PROFISSIONAL (ACTUALIZADO) -->
-            <div class="seccao-titulo"><i class="fas fa-briefcase"></i> 3. Dados Profissionais e AcadÈmicos</div>
-            <div class="campo">
-                <div class="label">NÌvel AcadÈmico</div>
-                <div class="valor"><%= j.nivel_academico %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Curso / ¡rea de FormaÁ„o</div>
-                <div class="valor"><%= j.curso %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Sector de Actividade</div>
-                <div class="valor"><%= j.sector_trabalho %></div>
-            </div>
-            <div class="campo">
-                <div class="label">Funcion·rio?</div>
-                <div class="valor"><%= j.funcionario %></div>
-            </div>
-            <div class="campo" style="grid-column: span 2;">
-                <div class="label">Cursos Complementares / Habilidades</div>
-                <div class="valor"><%= j.cursos_complementares %></div>
-            </div>
+                <!-- 2. VIDA RELIGIOSA -->
+                <div class="seccao-titulo"><i class="fas fa-cross"></i> 2. Vida Religiosa e Capelania</div>
+                <div class="campo">
+                    <div class="label">Centro Pastoral</div>
+                    <div class="valor"><%= j.centro_pastoral || 'Sede' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Capela / Comunidade</div>
+                    <div class="valor"><%= j.capela || 'Rainha da Paz' %></div>
+                </div>
+                <div class="campo" style="grid-column: span 2;">
+                    <div class="label">Grupo ou Movimento</div>
+                    <div class="valor"><%= j.grupo_movimento || 'CPPJ Geral' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Sacramentos</div>
+                    <div class="valor">Batizado: <%= j.batizado || 'N√£o' %> | Crisma: <%= j.crismado || 'N√£o' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Estado Civil</div>
+                    <div class="valor"><%= j.casado || 'Solteiro(a)' %></div>
+                </div>
 
-            <!-- ASSINATURA -->
-            <div style="grid-column: span 2; text-align: center; margin-top: 40px;">
-                <p>________________________________________________</p>
-                <p style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Assinatura do Membro / Secretaria</p>
-                <p style="font-size: 0.6rem; color: #888;">Cangamba, <%= new Date().toLocaleDateString('pt-PT') %></p>
+                <!-- 3. VIDA ACAD√âMICA -->
+                <div class="seccao-titulo"><i class="fas fa-graduation-cap"></i> 3. Habilita√ß√µes e Forma√ß√£o</div>
+                <div class="campo">
+                    <div class="label">N√≠vel Acad√©mico</div>
+                    <div class="valor"><%= j.nivel_academico || 'Nenhum' %></div>
+                </div>
+                <div class="campo">
+                    <div class="label">Curso / √Årea</div>
+                    <div class="valor"><%= j.curso || '---' %></div>
+                </div>
+
+                <!-- ASSINATURA -->
+                <div style="grid-column: span 2; text-align: center; margin-top: 40px;">
+                    <p>________________________________________________</p>
+                    <p style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Assinatura do Membro / Secretaria</p>
+                    <p style="font-size: 0.6rem; color: #888;">Cangamba, <%= new Date().toLocaleDateString('pt-PT') %></p>
+                </div>
             </div>
-        </div>
-        <% }) %>
+            <% }) %>
+        <% } else { %>
+            <div style="padding: 100px; text-align: center;">
+                <h3 style="color: var(--azul);">Erro: Nenhum dado encontrado.</h3>
+                <p>Verifique se o ID do membro est√° correto no sistema.</p>
+            </div>
+        <% } %>
 
         <div class="footer-ficha">
             <button onclick="window.print()" class="btn-imprimir">
-                <i class="fas fa-print"></i> Imprimir Ficha de Membro
+                <i class="fas fa-print"></i> Imprimir Ficha Agora
             </button>
-            <p style="margin-top: 20px;"><a href="/admin-dashboard" style="color: var(--azul); font-weight: bold; text-decoration: none; font-size: 0.8rem;">VOLTAR AO PAINEL</a></p>
+            <p style="margin-top: 20px;">
+                <a href="/admin-lista" style="color: var(--azul); font-weight: bold; text-decoration: none; font-size: 0.8rem;">VOLTAR √Ä LISTA</a>
+            </p>
         </div>
     </div>
 
