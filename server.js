@@ -4,38 +4,51 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const PDFDocument = require('pdfkit');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// --- 1. CONFIGURAÇÃO DE CAMINHOS (Pasta: data) ---
+// --- 1. CONFIGURAÇÕES E PASTAS ---
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 const getPath = (file) => path.join(DATA_DIR, file);
 
-// --- 2. FUNÇÕES DE PERSISTÊNCIA ---
+const FILES = {
+    jovens: getPath('jovens.json'),
+    users: getPath('usuarios.json'),
+    noticias: getPath('noticias.json'),
+    logs: getPath('auditoria.json'),
+    financas: getPath('financas.json')
+};
+
+// --- 2. PERSISTÊNCIA DE DADOS ---
 const carregarDados = (arquivo) => {
-    const p = getPath(arquivo);
-    if (!fs.existsSync(p)) fs.writeFileSync(p, JSON.stringify([]));
+    if (!fs.existsSync(arquivo)) fs.writeFileSync(arquivo, JSON.stringify([]));
     try {
-        const conteudo = fs.readFileSync(p, 'utf-8');
+        const conteudo = fs.readFileSync(arquivo, 'utf-8');
         return JSON.parse(conteudo || "[]");
     } catch (e) { return []; }
 };
 
 const salvarDados = (arquivo, dados) => {
-    fs.writeFileSync(getPath(arquivo), JSON.stringify(dados, null, 2));
+    fs.writeFileSync(arquivo, JSON.stringify(dados, null, 2));
 };
 
-// --- 3. CONFIGURAÇÕES DO SERVIDOR ---
+// Inicializar utilizador Admin padrão se não existir
+const inicializarAdmin = () => {
+    let users = carregarDados(FILES.users);
+    if (users.length === 0) {
+        users.push({ usuario: 'admin', senha: '123', nome: 'Coordenador Geral', tipo: 'coordenador' });
+        salvarDados(FILES.users, users);
+    }
+};
+inicializarAdmin();
+
+// --- 3. MIDDLEWARES ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
-// ATENÇÃO: Esta linha permite que as fotos da pasta 'public' sejam visualizadas
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -46,7 +59,6 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// --- 4. MIDDLEWARES DE SEGURANÇA ---
 const verificarLogin = (req, res, next) => {
     if (!req.session.user) return res.redirect('/login');
     next();
@@ -58,138 +70,138 @@ const permitirGestao = (req, res, next) => {
     res.redirect('/meus-registos');
 };
 
-const apenasCoordenador = (req, res, next) => {
-    if (req.session.user && req.session.user.tipo === 'coordenador') return next();
-    res.send("<script>alert('Acesso Negado!'); window.location='/admin-dashboard';</script>");
+const registarLog = (usuario, acao, detalhe) => {
+    let logs = carregarDados(FILES.logs);
+    logs.unshift({ id: Date.now(), usuario, acao, detalhe, data: new Date().toLocaleString('pt-PT') });
+    salvarDados(FILES.logs, logs.slice(0, 100));
 };
 
-// --- 5. PORTAL PÚBLICO E CONSULTA ---
+// --- 4. ROTAS PÚBLICAS ---
 app.get('/', (req, res) => {
     res.render('index', { 
-        noticias: carregarDados('noticias.json'),
-        sugestoes: carregarDados('sugestoes.json')
+        noticias: carregarDados(FILES.noticias)
     });
 });
 
-app.post('/consultar', (req, res) => {
-    const termo = (req.body.termo || "").toLowerCase().trim();
-    const jovens = carregarDados('jovens.json');
-    
-    const encontrado = jovens.find(j => {
-        const nome = j.nome ? j.nome.toLowerCase() : "";
-        const bi = j.bi ? j.bi.toLowerCase() : "";
-        return nome.includes(termo) || bi === termo;
-    });
+app.post('/consultar-registo', (req, res) => {
+    const { bi } = req.body;
+    const jovens = carregarDados(FILES.jovens);
+    const encontrou = jovens.find(j => j.bi === bi || (j.nome && j.nome.toUpperCase().includes(bi.toUpperCase())));
 
-    if (encontrado) {
-        res.render('ficha_membro', { jovens: [encontrado], user: req.session.user || null });
+    if (encontrou) {
+        res.send(`<script>alert('REGISTO ATIVO!\\nNome: ${encontrou.nome}\\nCentro: ${encontrou.centro_pastoral}'); window.location='/';</script>`);
     } else {
-        res.send("<script>alert('Membro não encontrado em Cangamba!'); window.location='/';</script>");
+        res.send(`<script>alert('Não encontramos registo para: ${bi}'); window.location='/';</script>`);
     }
 });
 
-app.post('/enviar-sugestao', (req, res) => {
-    let s = carregarDados('sugestoes.json');
-    s.unshift({ id: Date.now(), ...req.body, data: new Date().toLocaleString('pt-PT') });
-    salvarDados('sugestoes.json', s);
-    res.send("<script>alert('Obrigado pela sugestão!'); window.location='/';</script>");
-});
-
-// --- 6. LOGIN E ACESSOS ---
 app.get('/login', (req, res) => res.render('login'));
 
 app.post('/login', (req, res) => {
     const { usuario, senha } = req.body;
-    const users = carregarDados('usuarios.json');
+    const users = carregarDados(FILES.users);
     const user = users.find(u => u.usuario === usuario && u.senha === senha);
-    
     if (user) {
         req.session.user = user;
+        registarLog(user.nome, "LOGIN", "Entrou no sistema");
         return res.redirect(user.tipo === 'registador' ? '/meus-registos' : '/admin-dashboard');
     }
-    res.send("<script>alert('Credenciais inválidas!'); window.location='/login';</script>");
+    res.send("<script>alert('Dados inválidos!'); window.location='/login';</script>");
 });
 
-app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
+app.get('/logout', (req, res) => { 
+    req.session.destroy(); 
+    res.redirect('/'); 
+});
 
-// --- 7. DASHBOARDS ---
+// --- 5. DASHBOARD E LISTAS ---
 app.get('/admin-dashboard', permitirGestao, (req, res) => {
-    const jovens = carregarDados('jovens.json');
-    const financas = carregarDados('financas.json');
+    const jovens = carregarDados(FILES.jovens);
     const stats = {
         crismados: jovens.filter(j => j.crismado === 'Sim').length,
         naoCrismados: jovens.filter(j => j.crismado === 'Não').length,
         masculino: jovens.filter(j => j.genero === 'Masculino').length,
         feminino: jovens.filter(j => j.genero === 'Feminino').length
     };
-    res.render('admin_dashboard', { user: req.session.user, stats, devedores_lista: [], financas_lista: financas });
+    res.render('admin_dashboard', { user: req.session.user, stats, devedores_lista: [], financas_lista: carregarDados(FILES.financas) });
 });
 
 app.get('/admin-lista', permitirGestao, (req, res) => {
-    res.render('admin_lista', { jovens: carregarDados('jovens.json'), user: req.session.user });
+    res.render('admin_lista', { jovens: carregarDados(FILES.jovens), user: req.session.user });
 });
 
 app.get('/meus-registos', verificarLogin, (req, res) => {
-    const todos = carregarDados('jovens.json');
+    const todos = carregarDados(FILES.jovens);
     const meus = todos.filter(j => j.registadoPor === req.session.user.nome);
-    res.render('meus_registos', { user: req.session.user, jovens: meus });
+    res.render('meus_registos', { jovens: meus, user: req.session.user });
 });
 
-// --- 8. GESTÃO DE MEMBROS (CRUD) ---
+// --- 6. CADASTRO E EDIÇÃO ---
 app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos'));
 
 app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
-    let j = carregarDados('jovens.json');
-    const novo = { ...req.body, id: Date.now(), dataRegistro: new Date().toLocaleDateString('pt-PT'), registadoPor: req.session.user.nome };
-    j.push(novo); 
-    salvarDados('jovens.json', j);
+    let j = carregarDados(FILES.jovens);
+    const novo = { 
+        ...req.body, 
+        id: Date.now(), 
+        dataRegistro: new Date().toLocaleDateString('pt-PT'), 
+        registadoPor: req.session.user.nome 
+    };
+    j.push(novo);
+    salvarDados(FILES.jovens, j);
+    registarLog(req.session.user.nome, "CADASTRO", `Registou ${novo.nome}`);
     res.redirect(req.session.user.tipo === 'registador' ? '/meus-registos' : '/admin-lista');
 });
 
-app.get('/editar/:id', permitirGestao, (req, res) => {
-    const j = carregarDados('jovens.json').find(i => i.id == req.params.id);
-    res.render('editar_membro', { j, user: req.session.user });
+app.get('/editar/:id', verificarLogin, (req, res) => {
+    const jovens = carregarDados(FILES.jovens);
+    const j = jovens.find(item => item.id === parseInt(req.params.id));
+    res.render('editar_jovem', { j });
 });
 
-app.post('/atualizar-jovem/:id', permitirGestao, (req, res) => {
-    let j = carregarDados('jovens.json');
-    const index = j.findIndex(i => i.id == req.params.id);
-    if (index !== -1) { j[index] = { ...j[index], ...req.body }; salvarDados('jovens.json', j); }
-    res.redirect('/admin-lista');
+app.post('/atualizar-jovem/:id', verificarLogin, (req, res) => {
+    let jovens = carregarDados(FILES.jovens);
+    const id = parseInt(req.params.id);
+    const index = jovens.findIndex(j => j.id === id);
+    if (index !== -1) {
+        jovens[index] = { ...jovens[index], ...req.body, id: id };
+        salvarDados(FILES.jovens, jovens);
+        res.redirect('/admin-lista');
+    }
 });
 
-app.get('/eliminar/:id', apenasCoordenador, (req, res) => {
-    let j = carregarDados('jovens.json');
-    salvarDados('jovens.json', j.filter(i => i.id != req.params.id));
-    res.redirect('/admin-lista');
-});
-
-// --- 9. TESOURARIA E RELATÓRIOS ---
-app.post('/adicionar-financa', permitirGestao, (req, res) => {
-    let f = carregarDados('financas.json');
-    const nova = { id: Date.now(), ...req.body, data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
-    f.unshift(nova); 
-    salvarDados('financas.json', f);
-    const msg = `*RECIBO CPPJ*\nRecebemos *${nova.valor} Kz* de *${nova.jovem}*.`;
-    res.send(`<script>window.open('https://wa.me{nova.telefone}?text=${encodeURIComponent(msg)}', '_blank'); window.location='/admin-dashboard';</script>`);
-});
-
-// --- 10. PASSES E AUDITORIA ---
+// --- 7. EMISSÃO DE PASSES E FICHAS ---
 app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
-    const j = carregarDados('jovens.json').find(i => i.bi === req.body.termo || i.id == req.body.termo);
-    const foto = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-    if (j) res.render('passe_membro', { j, fotoEnviada: foto });
-    else res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
+    const { termo } = req.body;
+    const jovens = carregarDados(FILES.jovens);
+    const j = jovens.find(item => item.bi === termo || item.telefone === termo);
+    if (!j) return res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
+
+    let fotoBase64 = null;
+    if (req.file) {
+        fotoBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    }
+    res.render('passe_membro', { j, fotoEnviada: fotoBase64 });
 });
 
-app.get('/acessos', apenasCoordenador, (req, res) => {
-    res.render('acessos', { usuarios: carregarDados('usuarios.json') });
+app.get('/ficha/:id', verificarLogin, (req, res) => {
+    const jovens = carregarDados(FILES.jovens);
+    const j = jovens.filter(item => item.id === parseInt(req.params.id));
+    res.render('ficha_membro', { jovens: j });
 });
 
-app.get('/historico-auditoria', apenasCoordenador, (req, res) => {
-    res.render('historico_auditoria', { logs: carregarDados('auditoria.json'), user: req.session.user });
+// --- 8. SEGURANÇA E AUDITORIA ---
+app.get('/historico-auditoria', permitirGestao, (req, res) => {
+    res.render('auditoria', { logs: carregarDados(FILES.logs) });
+});
+
+app.get('/gestao-acessos', permitirGestao, (req, res) => {
+    res.render('gestao_acessos', { usuarios: carregarDados(FILES.users) });
 });
 
 // --- INICIALIZAÇÃO ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Servidor CPPJ na porta ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 CPPJ Cangamba Online rodando na porta ${PORT}`);
+    console.log(`👤 Login Padrão: admin / Senha: 123`);
+});
