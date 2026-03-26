@@ -1,136 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passe Oficial - <%= j.nome %></title>
-    
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
-    
-    <style>
-        :root { --azul: #1c2742; --dourado: #fbbf24; }
-        body { background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 20px; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        
-        .folha-impressao { display: flex; flex-direction: column; gap: 30px; }
-        
-        .cartao { 
-            width: 450px; height: 280px; 
-            border-radius: 15px; position: relative; border: 3px solid var(--dourado); 
-            overflow: hidden; box-sizing: border-box; 
-        }
-        
-        /* --- FRENTE: IDENTIFICAÇÃO PRINCIPAL --- */
-        .frente { background: linear-gradient(135deg, var(--azul) 0%, #0a0e1a 100%); color: white; padding: 15px; }
-        
-        .header-cartao { text-align: center; border-bottom: 1px solid rgba(251, 191, 36, 0.3); padding-bottom: 8px; margin-bottom: 10px; }
-        .diocese { font-size: 0.75rem; font-weight: 800; color: var(--dourado); display: block; letter-spacing: 1px; }
-        .paroquia { font-size: 0.55rem; color: #fff; display: block; text-transform: uppercase; margin: 2px 0; }
-
-        .corpo-cartao { display: flex; gap: 15px; align-items: flex-start; }
-        .foto-box { width: 105px; height: 130px; border: 2px solid var(--dourado); background: #000; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .foto-box img { width: 100%; height: 100%; object-fit: cover; }
-
-        .dados { flex: 1; }
-        .campo { margin-bottom: 6px; }
-        .label { font-size: 0.5rem; color: var(--dourado); font-weight: 800; text-transform: uppercase; display: block; }
-        .valor { font-size: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1px; line-height: 1.2; }
-
-        /* --- VERSO: REGRAS E ASSINATURA --- */
-        .verso { background: white; color: var(--azul); padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .marca-dagua { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; color: var(--azul); z-index: 0; pointer-events: none; }
-        
-        .regras { font-size: 0.65rem; line-height: 1.5; color: #333; margin-bottom: 25px; position: relative; z-index: 1; }
-        
-        .assinatura-area { position: relative; z-index: 1; width: 100%; }
-        .linha { width: 180px; border-top: 1.5px solid var(--azul); margin: 0 auto 5px auto; }
-        .cargo { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--azul); }
-        .nome-coord { font-size: 0.6rem; color: #555; font-weight: 600; }
-
-        .footer-verso { position: absolute; bottom: 12px; width: 85%; display: flex; justify-content: space-between; font-size: 0.45rem; color: #aaa; border-top: 1px solid #eee; padding-top: 5px; }
-        
-        .btn-print { margin-top: 25px; padding: 12px 35px; background: var(--azul); color: white; border: 2px solid var(--dourado); border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; }
-        .btn-print:hover { background: var(--dourado); color: var(--azul); }
-
-        @media print { 
-            .btn-print { display: none; } 
-            body { background: white; padding: 0; } 
-            .cartao { box-shadow: none; margin: 10px auto; -webkit-print-color-adjust: exact; } 
-        }
-    </style>
-</head>
-<body>
-
-    <div class="folha-impressao">
-        
-        <!-- FRENTE: IDENTIFICAÇÃO PRINCIPAL -->
-        <div class="cartao frente">
-            <div class="header-cartao">
-                <span class="diocese">DIOCESE DE LWENA</span>
-                <span class="paroquia">PARÓQUIA DE NOSSA SENHORA RAINHA DA PAZ - CANGAMBA</span>
-            </div>
-
-            <div class="corpo-cartao">
-                <div class="foto-box">
-                    <% if (typeof fotoEnviada !== 'undefined' && fotoEnviada) { %> 
-                        <img src="<%= fotoEnviada %>"> 
-                    <% } else { %> 
-                        <i class="fas fa-user fa-3x" style="opacity:0.2;"></i> 
-                    <% } %>
-                </div>
-                
-                <div class="dados">
-                    <div class="campo">
-                        <span class="label">Membro Portador</span>
-                        <div class="valor"><%= j.nome.toUpperCase() %></div>
-                    </div>
-                    <div class="campo">
-                        <span class="label">B.I. / Identidade</span>
-                        <div class="valor"><%= j.bi %></div>
-                    </div>
-                    <div class="campo">
-                        <span class="label">Centro Pastoral</span>
-                        <div class="valor"><%= j.centro_pastoral %></div>
-                    </div>
-                    <div class="campo">
-                        <span class="label">Grupo / Movimento</span>
-                        <div class="valor"><%= j.grupo_movimento || 'CPPJ Geral' %></div>
-                    </div>
-                </div>
-            </div>
-            <div style="position:absolute; bottom:10px; right:15px; font-size:0.45rem; color:var(--dourado);">ID: <%= j.id %></div>
-        </div>
-
-        <!-- VERSO: TERMOS E VALIDAÇÃO (LIMPO) -->
-        <div class="cartao verso">
-            <div class="marca-dagua"><i class="fas fa-church fa-9x"></i></div>
-            
-            <div class="regras">
-                <strong style="color: var(--azul); letter-spacing: 1px;">TERMOS DE UTILIZAÇÃO</strong><br><br>
-                1. Este passe identifica o portador como membro ativo da CPPJ.<br>
-                2. É pessoal, intransmissível e de uso obrigatório em atividades oficiais.<br>
-                3. Em caso de extravio, informe a secretaria paroquial.<br>
-                4. Válido enquanto o membro estiver em comunhão com a Paróquia.
-            </div>
-
-            <div class="assinatura-area">
-                <div class="linha"></div>
-                <span class="cargo">O Coordenador Paroquial</span><br>
-                <span class="nome-coord">Elias Mussole Enoque</span>
-            </div>
-
-            <div class="footer-verso">
-                <span>CANGAMBA - MOXICO</span>
-                <span>EMISSÃO: <%= new Date().toLocaleDateString('pt-PT') %></span>
-            </div>
-        </div>
-
+<!-- FRENTE DO CARTÃƒO (No teu ficheiro passe_membro.ejs) -->
+<div class="cartao frente">
+    <div class="header-cartao" style="text-align: center; border-bottom: 1px solid rgba(251, 191, 36, 0.3); padding-bottom: 5px; margin-bottom: 10px;">
+        <span class="diocese" style="font-size: 0.75rem; font-weight: 800; color: #fbbf24; display: block; letter-spacing: 1px;">DIOCESE DE LWENA</span>
+        <span class="paroquia" style="font-size: 0.55rem; color: #fff; display: block; text-transform: uppercase; margin: 2px 0;">ParÃ³quia de Nossa Senhora Rainha da Paz - Cangamba</span>
+        <!-- NOVO CAMPO ADICIONADO ABAIXO -->
+        <span class="comissao" style="font-size: 0.6rem; color: #fbbf24; font-weight: 800; display: block; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;">ComissÃ£o Paroquial da Pastoral Juvenil</span>
     </div>
 
-    <!-- CONTROLOS -->
-    <button class="btn-print" onclick="window.print()">
-        <i class="fas fa-print"></i> Imprimir Passe Oficial
-    </button>
-
-</body>
-</html>
+    <div class="corpo-cartao" style="display: flex; gap: 15px; align-items: flex-start;">
+        <div class="foto-box" style="width: 105px; height: 130px; border: 2px solid #fbbf24; background: #000; overflow: hidden; flex-shrink: 0;">
+            <% if (typeof fotoEnviada !== 'undefined' && fotoEnviada) { %> 
+                <img src="<%= fotoEnviada %>" style="width: 100%; height: 100%; object-fit: cover;"> 
+            <% } else { %> 
+                <div style="text-align:center; padding-top:40px;"><i class="fas fa-user fa-3x" style="opacity:0.2;"></i></div>
+            <% } %>
+        </div>
+        
+        <div class="dados" style="flex: 1; color: white;">
+            <div class="campo">
+                <span style="font-size: 0.5rem; color: #fbbf24; font-weight: 800; text-transform: uppercase; display: block;">Membro Portador</span>
+                <div style="font-size: 0.85rem; font-weight: 600;"><%= j.nome.toUpperCase() %></div>
+            </div>
+            <div class="campo">
+                <span style="font-size: 0.5rem; color: #fbbf24; font-weight: 800; text-transform: uppercase; display: block;">B.I. / Identidade</span>
+                <div style="font-size: 0.75rem;"><%= j.bi %></div>
+            </div>
+            <div class="campo">
+                <span style="font-size: 0.5rem; color: #fbbf24; font-weight: 800; text-transform: uppercase; display: block;">Centro Pastoral</span>
+                <div style="font-size: 0.75rem;"><%= j.centro_pastoral %></div>
+            </div>
+            <div class="campo">
+                <span style="font-size: 0.5rem; color: #fbbf24; font-weight: 800; text-transform: uppercase; display: block;">Grupo / Movimento</span>
+                <div style="font-size: 0.75rem;"><%= j.grupo_movimento || 'Sem Grupo' %></div>
+            </div>
+        </div>
+    </div>
+    <div style="position:absolute; bottom:10px; right:15px; font-size:0.45rem; color:#fbbf24;">ID: <%= j.id %></div>
+</div>
