@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
+    <!-- 1. CORREÇÃO DE ACENTOS (UTF-8) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal CPPJ - Cangamba</title>
@@ -32,11 +33,11 @@
         }
 
         /* --- CABEÇALHO --- */
-        header { text-align: center; margin-bottom: 30px; }
+        header { text-align: center; margin-bottom: 20px; }
         .diocese-txt { font-size: 0.8rem; color: var(--dourado); letter-spacing: 4px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
         .paroquia-txt { font-size: 0.65rem; opacity: 0.8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
 
-        /* --- CÍRCULO CENTRAL (FOTO) --- */
+        /* --- CÍRCULO CENTRAL --- */
         .moldura-foto {
             width: 240px; height: 240px;
             border: 4px solid var(--dourado);
@@ -72,26 +73,15 @@
         }
         .btn-lupa:hover { background: white; transform: scale(1.1); }
 
-        /* --- BOTÃO ACESSO RESTRITO --- */
+        /* --- BOTÃO ACESSO --- */
         .btn-acesso { 
             background: white; color: var(--azul-master);
             text-decoration: none; font-size: 0.75rem; 
             letter-spacing: 3px; padding: 15px 45px; 
             border-radius: 50px; transition: 0.4s;
             text-transform: uppercase; font-weight: 900;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-        .btn-acesso:hover { transform: translateY(-5px); letter-spacing: 5px; background: var(--dourado); }
-
-        /* --- BOTÃO SUGESTÕES --- */
-        .btn-sugestao {
-            position: fixed; bottom: 30px; left: 30px;
-            background: rgba(15, 23, 42, 0.8); border: 1px solid var(--dourado);
-            color: var(--dourado); padding: 12px 25px; border-radius: 50px;
-            cursor: pointer; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 2px; transition: 0.3s;
-        }
-        .btn-sugestao:hover { background: var(--dourado); color: black; }
+        .btn-acesso:hover { background: var(--dourado); transform: translateY(-5px); }
 
         /* --- MURAL LATERAL --- */
         .sinal-noticias {
@@ -110,37 +100,31 @@
 </head>
 <body>
 
-    <!-- BOTÃO LATERAL -->
-    <div class="sinal-noticias" onclick="abrirNoticias()">
-        MURAL DE NOTÍCIAS
-    </div>
+    <!-- BOTÃO MURAL -->
+    <div class="sinal-noticias" onclick="abrirNoticias()">MURAL DE NOTÍCIAS</div>
 
-    <!-- SIDEBAR DE NOTÍCIAS -->
+    <!-- SIDEBAR -->
     <div id="sidebarNoticias" class="sidebar">
         <div style="padding: 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b;">
-            <h2 style="color:var(--dourado); margin:0; font-size: 1rem; letter-spacing: 2px;">COMUNICADOS</h2>
+            <h2 style="color:var(--dourado); margin:0; font-size: 1rem;">COMUNICADOS</h2>
             <span style="font-size:30px; cursor:pointer; color:var(--dourado);" onclick="fecharNoticias()">&times;</span>
         </div>
-        <div id="conteudoNoticias">
-            <% if (noticias && noticias.length > 0) { %>
-                <% noticias.forEach(n => { %>
-                    <div class="noticia-item">
-                        <h4 style="color:var(--dourado); margin:0 0 5px 0;"><%= n.titulo %></h4>
-                        <p style="font-size:0.8rem; color:#94a3b8; line-height: 1.4;"><%= n.conteudo %></p>
-                        <small style="color:#475569;"><%= n.data %></small>
-                    </div>
-                <% }) %>
-            <% } else { %>
-                <p style="text-align:center; opacity:0.3; margin-top:50px;">Nenhum aviso para hoje.</p>
-            <% } %>
-        </div>
+        <% if (locals.noticias && noticias.length > 0) { %>
+            <% noticias.forEach(n => { %>
+                <div class="noticia-item">
+                    <h4 style="color:var(--dourado); margin:0;"><%= n.titulo %></h4>
+                    <p style="font-size:0.8rem; color:#94a3b8;"><%= n.conteudo %></p>
+                    <small style="color:#475569;"><%= n.data %></small>
+                </div>
+            <% }) %>
+        <% } %>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEÚDO -->
     <header>
         <div class="diocese-txt">Diocese do Lwena</div>
         <div class="paroquia-txt">Paróquia de Nossa Senhora Rainha da Paz - Cangamba</div>
-        <div class="paroquia-txt" style="font-weight: 800; opacity: 1;">Comissão Paroquial da Pastoral Juvenil</div>
+        <div class="paroquia-txt" style="font-weight: 800; opacity: 1;">CPPJ - COMISSÃO PAROQUIAL DA PASTORAL JUVENIL</div>
     </header>
 
     <div class="moldura-foto">
@@ -151,19 +135,15 @@
 
     <div class="container-consulta">
         <form action="/consultar-registo" method="POST" class="form-consulta">
-            <input type="text" name="bi" class="input-consulta" placeholder="Consultar BI ou Nome Completo..." required>
-            <button type="submit" class="btn-lupa">
-                <i class="fas fa-search"></i>
-            </button>
+            <input type="text" name="bi" class="input-consulta" placeholder="Insira o seu B.I. para ver a Ficha..." required>
+            <button type="submit" class="btn-lupa"><i class="fas fa-search"></i></button>
         </form>
     </div>
 
-    <a href="/login" class="btn-acesso">Acesso Restrito</a>
-
-    <button class="btn-sugestao" onclick="alert('Funcionalidade em breve!')">Sugestões</button>
+    <a href="/login" class="btn-acesso">Painel de Gestão</a>
 
     <script>
-        function abrirNoticias() { document.getElementById("sidebarNoticias").style.width = "380px"; }
+        function abrirNoticias() { document.getElementById("sidebarNoticias").style.width = "350px"; }
         function fecharNoticias() { document.getElementById("sidebarNoticias").style.width = "0"; }
     </script>
 
