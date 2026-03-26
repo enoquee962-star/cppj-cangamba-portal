@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Caixa - CPPJ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    <style>
+        :root { --azul: #0f172a; --dourado: #fbbf24; --sucesso: #22c55e; --perigo: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; margin: 0; padding: 30px; }
+        
+        .relatorio-paper { max-width: 1000px; margin: auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+
+        /* HEADER */
+        .header-rel { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        .header-rel h1 { color: var(--azul); text-transform: uppercase; margin: 5px 0; font-size: 1.4rem; }
+
+        /* CARTÕES DE RESUMO */
+        .resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .card-resumo { padding: 20px; border-radius: 12px; color: white; text-align: center; }
+        .card-entradas { background: var(--sucesso); }
+        .card-saidas { background: var(--perigo); }
+        .card-saldo { background: var(--azul); border: 2px solid var(--dourado); }
+        .label-resumo { font-size: 0.65rem; text-transform: uppercase; font-weight: 800; opacity: 0.8; letter-spacing: 1px; }
+        .valor-resumo { font-size: 1.4rem; font-weight: 900; margin-top: 5px; }
+
+        /* TABELA */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: var(--azul); font-size: 0.7rem; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        
+        .txt-sucesso { color: var(--sucesso); font-weight: 800; }
+        .txt-perigo { color: var(--perigo); font-weight: 800; }
+
+        .btn-imprimir { position: fixed; bottom: 30px; right: 30px; background: var(--azul); color: white; border: none; padding: 15px 35px; border-radius: 50px; font-weight: 800; cursor: pointer; }
+
+        @media print { .btn-imprimir { display: none; } body { padding: 0; } .relatorio-paper { width: 100%; box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="relatorio-paper">
+        <div class="header-rel">
+            <p style="margin:0; font-size:0.7rem; letter-spacing:2px;">PARÓQUIA RAINHA DA PAZ - CANGAMBA</p>
+            <h1>Relatório de Movimentação de Caixa</h1>
+            <p style="margin:0; font-size:0.7rem; color:#666;">CPPJ - Comissão Paroquial da Pastoral Juvenil</p>
+        </div>
+
+        <!-- RESUMO FINANCEIRO -->
+        <div class="resumo-grid">
+            <div class="card-resumo card-entradas">
+                <div class="label-resumo">Total Entradas</div>
+                <div class="valor-resumo">+ <%= totalEntradas.toLocaleString('pt-PT') %> Kz</div>
+            </div>
+            <div class="card-resumo card-saidas">
+                <div class="label-resumo">Total Saídas</div>
+                <div class="valor-resumo">− <%= totalSaidas.toLocaleString('pt-PT') %> Kz</div>
+            </div>
+            <div class="card-resumo card-saldo">
+                <div class="label-resumo" style="color: var(--dourado);">Saldo em Caixa</div>
+                <div class="valor-resumo" style="color: var(--dourado);"><%= saldoFinal.toLocaleString('pt-PT') %> Kz</div>
+            </div>
+        </div>
+
+        <!-- LISTAGEM DETALHADA -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição / Membro</th>
+                    <th>Tipo</th>
+                    <th style="text-align: right;">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% financas.forEach(f => { %>
+                    <tr>
+                        <td><%= f.data %></td>
+                        <td>
+                            <strong><%= f.jovem %></strong><br>
+                            <small style="color:#999;">Responsável: <%= f.resp %></small>
+                        </td>
+                        <td>
+                            <span class="<%= f.categoria === 'Entrada' ? 'txt-sucesso' : 'txt-perigo' %>">
+                                <%= f.categoria === 'Entrada' ? '✚ ENTRADA' : '− SAÍDA' %>
+                            </span>
+                        </td>
+                        <td style="text-align: right;" class="<%= f.categoria === 'Entrada' ? 'txt-sucesso' : 'txt-perigo' %>">
+                            <%= f.categoria === 'Entrada' ? '+' : '-' %> <%= parseFloat(f.valor).toLocaleString('pt-PT') %> Kz
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; display: flex; justify-content: space-between; font-size: 0.65rem; color: #999;">
+            <span>Gerado por: <%= user.nome %></span>
+            <span>Data de Emissão: <%= new Date().toLocaleString('pt-PT') %></span>
+        </div>
+    </div>
+
+    <button class="btn-imprimir" onclick="window.print()">
+        <i class="fas fa-print"></i> IMPRIMIR RELATÓRIO OFICIAL
+    </button>
+
+</body>
+</html>
