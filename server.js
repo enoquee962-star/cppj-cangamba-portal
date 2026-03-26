@@ -22,9 +22,9 @@ const FILES = {
     financas: getPath('financas.json')
 };
 
-// --- 2. PERSISTÊNCIA DE DADOS COM SUPORTE UTF-8 (ACENTOS) ---
+// --- 2. PERSISTÊNCIA DE DADOS COM SUPORTE A ACENTOS (UTF-8) ---
 const carregarDados = (arquivo) => {
-    if (!fs.existsSync(arquivo)) fs.writeFileSync(arquivo, JSON.stringify([], null, 2), 'utf-8');
+    if (!fs.existsSync(arquivo)) fs.writeFileSync(arquivo, JSON.stringify([]), 'utf-8');
     try {
         const conteudo = fs.readFileSync(arquivo, 'utf-8');
         return JSON.parse(conteudo || "[]");
@@ -35,7 +35,7 @@ const salvarDados = (arquivo, dados) => {
     fs.writeFileSync(arquivo, JSON.stringify(dados, null, 2), 'utf-8');
 };
 
-// Criar Administrador Padrão
+// Inicializar Admin padrão
 const inicializarAdmin = () => {
     let users = carregarDados(FILES.users);
     if (users.length === 0) {
@@ -45,7 +45,7 @@ const inicializarAdmin = () => {
 };
 inicializarAdmin();
 
-// --- 3. CONFIGURAÇÕES DO EXPRESS ---
+// --- 3. MIDDLEWARES ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -59,7 +59,6 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// --- 4. MIDDLEWARES DE ACESSO ---
 const verificarLogin = (req, res, next) => {
     if (!req.session.user) return res.redirect('/login');
     next();
@@ -77,7 +76,7 @@ const registarLog = (usuario, acao, detalhe) => {
     salvarDados(FILES.logs, logs.slice(0, 100));
 };
 
-// --- 5. ROTAS PÚBLICAS E CONSULTA ---
+// --- 4. ROTAS PÚBLICAS (INDEX E CONSULTA) ---
 app.get('/', (req, res) => {
     res.render('index', { noticias: carregarDados(FILES.noticias) });
 });
@@ -85,9 +84,15 @@ app.get('/', (req, res) => {
 app.post('/consultar-registo', (req, res) => {
     const { bi } = req.body;
     const jovens = carregarDados(FILES.jovens);
-    const encontrou = jovens.find(j => (j.bi === bi) || (j.nome && j.nome.toUpperCase().includes(bi.toUpperCase())));
+    
+    // Procura por BI ou Nome
+    const encontrou = jovens.find(j => 
+        (j.bi && j.bi === bi) || 
+        (j.nome && j.nome.toUpperCase().includes(bi.toUpperCase()))
+    );
 
     if (encontrou) {
+        // Redireciona diretamente para a ficha do membro encontrado
         res.send(`
             <script>
                 alert('REGISTO ENCONTRADO! \\nNome: ${encontrou.nome}');
@@ -95,7 +100,7 @@ app.post('/consultar-registo', (req, res) => {
             </script>
         `);
     } else {
-        res.send("<script>alert('Registo não encontrado.'); window.location='/';</script>");
+        res.send("<script>alert('Registo não encontrado para: " + bi + "'); window.location='/';</script>");
     }
 });
 
@@ -118,17 +123,50 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-// --- 6. DASHBOARD E LISTAS ---
+// --- 5. OPERAÇÕES DE MEMBROS (CADASTRO/PASSE/FICHA) ---
+app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos'));
+
+app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
+    let j = carregarDados(FILES.jovens);
+    const novo = { 
+        ...req.body, 
+        id: Date.now(), 
+        dataRegistro: new Date().toLocaleDateString('pt-PT'), 
+        registadoPor: req.session.user.nome 
+    };
+    j.push(novo);
+    salvarDados(FILES.jovens, j);
+    registarLog(req.session.user.nome, "CADASTRO", `Registou ${novo.nome}`);
+    res.redirect(req.session.user.tipo === 'registador' ? '/meus-registos' : '/admin-lista');
+});
+
+// Correção da Ficha de Membro (Garante que envia um Array)
+app.get('/ficha/:id', (req, res) => {
+    const jovens = carregarDados(FILES.jovens);
+    const j = jovens.filter(item => item.id === parseInt(req.params.id));
+    if (j.length === 0) return res.send("Membro não encontrado.");
+    res.render('ficha_membro', { jovens: j });
+});
+
+app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
+    const { termo } = req.body;
+    const j = carregarDados(FILES.jovens).find(item => item.bi === termo || item.telefone === termo);
+    if (!j) return res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
+
+    let fotoBase64 = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
+    res.render('passe_membro', { j, fotoEnviada: fotoBase64 });
+});
+
+// --- 6. DASHBOARDS E GESTÃO ---
 app.get('/admin-dashboard', permitirGestao, (req, res) => {
     const jovens = carregarDados(FILES.jovens);
-    const financas = carregarDados(FILES.financas);
     const stats = {
         crismados: jovens.filter(j => j.crismado === 'Sim').length,
         naoCrismados: jovens.filter(j => j.crismado === 'Não').length,
         masculino: jovens.filter(j => j.genero === 'Masculino').length,
         feminino: jovens.filter(j => j.genero === 'Feminino').length
     };
-    res.render('admin_dashboard', { user: req.session.user, stats, devedores_lista: [], financas_lista: financas });
+    res.render('admin_dashboard', { user: req.session.user, stats, devedores_lista: [], financas_lista: carregarDados(FILES.financas) });
 });
 
 app.get('/admin-lista', permitirGestao, (req, res) => {
@@ -141,87 +179,12 @@ app.get('/meus-registos', verificarLogin, (req, res) => {
     res.render('meus_registos', { jovens: meus, user: req.session.user });
 });
 
-// --- 7. OPERAÇÕES FINANCEIRAS (ENTRADAS/SAÍDAS) ---
-app.post('/adicionar-financa', permitirGestao, (req, res) => {
-    let f = carregarDados(FILES.financas);
-    const nova = { 
-        id: Date.now(), 
-        ...req.body, 
-        data: new Date().toLocaleDateString('pt-PT'), 
-        resp: req.session.user.nome 
-    };
-    f.unshift(nova);
-    salvarDados(FILES.financas, f);
-    
-    if (nova.categoria === 'Entrada' && nova.telefone) {
-        const msg = `*RECIBO CPPJ CANGAMBA*\nRecebemos: *${nova.valor} Kz*\nDe: *${nova.jovem}*\nTipo: *${nova.tipo}*`;
-        res.send(`<script>window.open('https://wa.me{nova.telefone}?text=${encodeURIComponent(msg)}', '_blank'); window.location='/admin-dashboard';</script>`);
-    } else {
-        res.redirect('/admin-dashboard');
-    }
-});
-
-app.get('/relatorio-financeiro', permitirGestao, (req, res) => {
-    const f = carregarDados(FILES.financas);
-    const totalEntradas = f.filter(x => x.categoria === 'Entrada').reduce((acc, x) => acc + parseFloat(x.valor || 0), 0);
-    const totalSaidas = f.filter(x => x.categoria === 'Saída').reduce((acc, x) => acc + parseFloat(x.valor || 0), 0);
-    res.render('relatorio_financeiro', { financas: f, totalEntradas, totalSaidas, saldoFinal: (totalEntradas - totalSaidas), user: req.session.user });
-});
-
-// --- 8. MEMBROS (CADASTRO, PASSE E FICHA) ---
-app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos'));
-
-app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
-    let j = carregarDados(FILES.jovens);
-    const novo = { ...req.body, id: Date.now(), dataRegistro: new Date().toLocaleDateString('pt-PT'), registadoPor: req.session.user.nome };
-    j.push(novo);
-    salvarDados(FILES.jovens, j);
-    registarLog(req.session.user.nome, "CADASTRO", `Registou ${novo.nome}`);
-    res.redirect(req.session.user.tipo === 'registador' ? '/meus-registos' : '/admin-lista');
-});
-
-app.get('/ficha/:id', (req, res) => {
-    const j = carregarDados(FILES.jovens).filter(item => item.id === parseInt(req.params.id));
-    if (j.length === 0) return res.send("Membro não encontrado.");
-    res.render('ficha_membro', { jovens: j });
-});
-
-app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
-    const { termo } = req.body;
-    const j = carregarDados(FILES.jovens).find(item => item.bi === termo || item.telefone === termo);
-    if (!j) return res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
-    let fotoBase64 = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
-    res.render('passe_membro', { j, fotoEnviada: fotoBase64 });
-});
-
-app.get('/eliminar/:id', permitirGestao, (req, res) => {
-    let j = carregarDados(FILES.jovens);
-    salvarDados(FILES.jovens, j.filter(x => x.id !== parseInt(req.params.id)));
-    res.redirect('/admin-lista');
-});
-
-// --- 9. ADMINISTRAÇÃO E SEGURANÇA ---
+// Gestão de Acessos
 app.get('/gestao-acessos', permitirGestao, (req, res) => {
     res.render('gestao_acessos', { usuarios: carregarDados(FILES.users), user: req.session.user });
 });
 
 app.get('/acessos', permitirGestao, (req, res) => res.redirect('/gestao-acessos'));
-
-app.post('/criar-acesso', permitirGestao, (req, res) => {
-    let users = carregarDados(FILES.users);
-    users.push(req.body);
-    salvarDados(FILES.users, users);
-    res.redirect('/gestao-acessos');
-});
-
-app.get('/eliminar-acesso/:usuario', permitirGestao, (req, res) => {
-    let users = carregarDados(FILES.users);
-    const alvo = req.params.usuario;
-    if (alvo !== 'admin' && alvo !== req.session.user.usuario) {
-        salvarDados(FILES.users, users.filter(u => u.usuario !== alvo));
-    }
-    res.redirect('/gestao-acessos');
-});
 
 app.get('/historico-auditoria', permitirGestao, (req, res) => {
     res.render('auditoria', { logs: carregarDados(FILES.logs) });
@@ -229,4 +192,4 @@ app.get('/historico-auditoria', permitirGestao, (req, res) => {
 
 // --- INICIALIZAÇÃO ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CPPJ Cangamba Online Ativo na porta ${PORT}`));
