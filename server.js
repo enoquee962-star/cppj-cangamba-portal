@@ -1,115 +1,91 @@
 const express = require('express');
-const session = require('express-session');
 const bodyParser = require('body-parser');
+const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const { exec } = require('child_process');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
 
-// --- 1. CONFIGURAÇÕES DE PASTAS E FICHEIROS ---
-const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+// --- 1. CONFIGURAÇÕES INICIAIS ---
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: 'cppj-cangamba-secret',
+    resave: false,
+    saveUninitialized: true
+}));
 
-const getPath = (file) => path.join(DATA_DIR, file);
+// Configuração do Multer (Memória para gerar o Passe em Base64)
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
+// Caminhos dos ficheiros de dados
 const FILES = {
-    jovens: getPath('jovens.json'),
-    users: getPath('usuarios.json'),
-    noticias: getPath('noticias.json'),
-    logs: getPath('auditoria.json'),
-    financas: getPath('financas.json')
+    jovens: path.join(__dirname, 'data', 'jovens.json'),
+    utilizadores: path.join(__dirname, 'data', 'utilizadores.json'),
+    financas: path.join(__dirname, 'data', 'financas.json'),
+    logs: path.join(__dirname, 'data', 'logs.json'),
+    noticias: path.join(__dirname, 'data', 'noticias.json'),
+    sugestoes: path.join(__dirname, 'data', 'sugestoes.json')
 };
 
-// --- 2. FUNÇÕES DE APOIO (JSON) ---
-const carregarDados = (arquivo) => {
-    if (!fs.existsSync(arquivo)) fs.writeFileSync(arquivo, JSON.stringify([]));
+// Funções Auxiliares de Dados
+const carregarDados = (caminho) => {
     try {
-        const conteudo = fs.readFileSync(arquivo, 'utf-8');
-        return JSON.parse(conteudo || "[]");
+        return JSON.parse(fs.readFileSync(caminho, 'utf-8'));
     } catch (e) { return []; }
 };
 
-const salvarDados = (arquivo, dados) => {
-    fs.writeFileSync(arquivo, JSON.stringify(dados, null, 2));
-};
-
-// Criar Admin inicial se a base de dados estiver vazia
-const inicializarAdmin = () => {
-    let users = carregarDados(FILES.users);
-    if (users.length === 0) {
-        users.push({ usuario: 'admin', senha: '123', nome: 'Coordenador Geral', tipo: 'coordenador' });
-        salvarDados(FILES.users, users);
-    }
-};
-inicializarAdmin();
-
-// --- 3. CONFIGURAÇÕES DO EXPRESS ---
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-app.use(session({
-    secret: 'cppj-cangamba-secret-2026',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-}));
-
-// --- 4. MIDDLEWARES DE SEGURANÇA ---
-const verificarLogin = (req, res, next) => {
-    if (!req.session.user) return res.redirect('/login');
-    next();
-};
-
-const permitirGestao = (req, res, next) => {
-    const autorizados = ['coordenador', 'assessor', 'tesoureiro'];
-    if (req.session.user && autorizados.includes(req.session.user.tipo)) return next();
-    res.redirect('/meus-registos');
+const salvarDados = (caminho, dados) => {
+    fs.writeFileSync(caminho, JSON.stringify(dados, null, 2));
 };
 
 const registarLog = (usuario, acao, detalhe) => {
     let logs = carregarDados(FILES.logs);
-    logs.unshift({ id: Date.now(), usuario, acao, detalhe, data: new Date().toLocaleString('pt-PT') });
-    salvarDados(FILES.logs, logs.slice(0, 100));
+    logs.unshift({ usuario, acao, detalhe, data: new Date().toLocaleString('pt-PT') });
+    salvarDados(FILES.logs, logs.slice(0, 500));
 };
 
-// --- 5. ROTAS PÚBLICAS (INDEX & CONSULTA) ---
+// --- 2. MIDDLEWARES DE SEGURANÇA ---
+const verificarLogin = (req, res, next) => {
+    if (req.session.user) return next();
+    res.redirect('/login');
+};
+
+const permitirGestao = (req, res, next) => {
+    if (req.session.user && (req.session.user.tipo === 'coordenador' || req.session.user.tipo === 'tesoureiro')) return next();
+    res.status(403).send("Acesso negado.");
+};
+
+// --- 3. ROTAS PÚBLICAS E CONSULTA ---
 app.get('/', (req, res) => {
     res.render('index', { noticias: carregarDados(FILES.noticias) });
 });
 
 app.post('/consultar-registo', (req, res) => {
     const { bi } = req.body;
-    const jovens = carregarDados(FILES.jovens);
-    const encontrou = jovens.find(j => 
-        (j.bi && j.bi === bi) || 
-        (j.nome && j.nome.toUpperCase().includes(bi.toUpperCase()))
-    );
-
-    if (encontrou) {
-        res.send(`<script>alert('REGISTO ENCONTRADO!\\nNome: ${encontrou.nome}\\nCentro: ${encontrou.centro_pastoral}'); window.location='/';</script>`);
-    } else {
-        res.send(`<script>alert('Registo não encontrado para: ${bi}'); window.location='/';</script>`);
-    }
+    const j = carregarDados(FILES.jovens).find(m => m.bi === bi);
+    if (j) return res.render('ficha_membro', { jovens: [j], user: { tipo: 'publico' } });
+    res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
 });
 
-// --- 6. AUTENTICAÇÃO ---
+// --- 4. AUTENTICAÇÃO ---
 app.get('/login', (req, res) => res.render('login'));
 
-app.post('/login', (req, res) => {
+app.post('/auth', (req, res) => {
     const { usuario, senha } = req.body;
-    const users = carregarDados(FILES.users);
+    const users = carregarDados(FILES.utilizadores);
     const user = users.find(u => u.usuario === usuario && u.senha === senha);
+
     if (user) {
         req.session.user = user;
         registarLog(user.nome, "LOGIN", "Entrou no sistema");
         return res.redirect(user.tipo === 'registador' ? '/meus-registos' : '/admin-dashboard');
     }
-    res.send("<script>alert('Dados inválidos!'); window.location='/login';</script>");
+    res.send("<script>alert('Credenciais Inválidas'); window.history.back();</script>");
 });
 
 app.get('/logout', (req, res) => {
@@ -117,63 +93,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-// --- 7. DASHBOARDS E LISTAGENS ---
-app.get('/admin-dashboard', permitirGestao, (req, res) => {
-    const jovens = carregarDados(FILES.jovens);
-    const stats = {
-        crismados: jovens.filter(j => j.crismado === 'Sim').length,
-        naoCrismados: jovens.filter(j => j.crismado === 'Não').length,
-        masculino: jovens.filter(j => j.genero === 'Masculino').length,
-        feminino: jovens.filter(j => j.genero === 'Feminino').length
-    };
-    res.render('admin_dashboard', { 
-        user: req.session.user, 
-        stats, 
-        devedores_lista: [], 
-        financas_lista: carregarDados(FILES.financas) 
-    });
-});
-
-app.get('/admin-lista', permitirGestao, (req, res) => {
-    res.render('admin_lista', { jovens: carregarDados(FILES.jovens), user: req.session.user });
-});
-
-app.get('/meus-registos', verificarLogin, (req, res) => {
-    const todos = carregarDados(FILES.jovens);
-    const meus = todos.filter(j => j.registadoPor === req.session.user.nome);
-    res.render('meus_registos', { jovens: meus, user: req.session.user });
-});
-
-// --- 8. GESTÃO DE ACESSOS (UTILIZADORES) ---
-app.get('/gestao-acessos', permitirGestao, (req, res) => {
-    res.render('gestao_acessos', { usuarios: carregarDados(FILES.users), user: req.session.user });
-});
-
-app.get('/acessos', permitirGestao, (req, res) => res.redirect('/gestao-acessos'));
-
-app.post('/criar-acesso', permitirGestao, (req, res) => {
-    let users = carregarDados(FILES.users);
-    if (users.find(u => u.usuario === req.body.usuario)) {
-        return res.send("<script>alert('Utilizador já existe!'); window.history.back();</script>");
-    }
-    users.push(req.body);
-    salvarDados(FILES.users, users);
-    registarLog(req.session.user.nome, "SEGURANÇA", `Criou acesso para ${req.body.nome}`);
-    res.redirect('/gestao-acessos');
-});
-
-app.get('/eliminar-acesso/:usuario', permitirGestao, (req, res) => {
-    let users = carregarDados(FILES.users);
-    const alvo = req.params.usuario;
-    if (alvo === 'admin' || alvo === req.session.user.usuario) {
-        return res.send("<script>alert('Ação proibida por segurança!'); window.location='/gestao-acessos';</script>");
-    }
-    salvarDados(FILES.users, users.filter(u => u.usuario !== alvo));
-    registarLog(req.session.user.nome, "SEGURANÇA", `Eliminou acesso de ${alvo}`);
-    res.redirect('/gestao-acessos');
-});
-
-// --- 9. OPERAÇÕES DE MEMBROS (CADASTRO/PASSE/FICHA) ---
+// --- 5. GESTÃO DE MEMBROS (CRUD) ---
 app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos'));
 
 app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
@@ -187,34 +107,53 @@ app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
     j.push(novo);
     salvarDados(FILES.jovens, j);
     registarLog(req.session.user.nome, "CADASTRO", `Registou ${novo.nome}`);
-    res.redirect(req.session.user.tipo === 'registador' ? '/meus-registos' : '/admin-lista');
+    res.redirect('/admin-lista');
 });
 
+app.get('/admin-lista', verificarLogin, (req, res) => {
+    res.render('lista_membros', { jovens: carregarDados(FILES.jovens), user: req.session.user });
+});
+
+app.get('/eliminar/:id', permitirGestao, (req, res) => {
+    let j = carregarDados(FILES.jovens).filter(m => m.id !== parseInt(req.params.id));
+    salvarDados(FILES.jovens, j);
+    res.redirect('/admin-lista');
+});
+
+// --- 6. TESOURARIA E RELATÓRIOS ---
+app.post('/adicionar-financa', permitirGestao, (req, res) => {
+    let f = carregarDados(FILES.financas);
+    const nova = { ...req.body, id: Date.now(), data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
+    f.unshift(nova);
+    salvarDados(FILES.financas, f);
+    res.redirect('/relatorio-financeiro');
+});
+
+app.get('/relatorio-financeiro', permitirGestao, (req, res) => {
+    const financas = carregarDados(FILES.financas);
+    const entradas = financas.filter(f => f.categoria === 'Entrada').reduce((s, f) => s + parseFloat(f.valor), 0);
+    const saidas = financas.filter(f => f.categoria === 'Saída').reduce((s, f) => s + parseFloat(f.valor), 0);
+    res.render('relatorio_financeiro', { financas, totalEntradas: entradas, totalSaidas: saidas, saldoFinal: entradas - saidas, user: req.session.user });
+});
+
+// --- 7. EMISSÃO DE PASSE (FRENTE/VERSO) ---
 app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
     const { termo } = req.body;
-    const j = carregarDados(FILES.jovens).find(item => item.bi === termo || item.telefone === termo);
+    const j = carregarDados(FILES.jovens).find(m => m.bi === termo || m.telefone === termo);
     if (!j) return res.send("<script>alert('Membro não encontrado!'); window.history.back();</script>");
-
+    
     let fotoBase64 = req.file ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}` : null;
     res.render('passe_membro', { j, fotoEnviada: fotoBase64 });
 });
 
-app.get('/ficha/:id', verificarLogin, (req, res) => {
-    const j = carregarDados(FILES.jovens).filter(item => item.id === parseInt(req.params.id));
-    res.render('ficha_membro', { jovens: j });
-});
-
-app.get('/eliminar/:id', permitirGestao, (req, res) => {
-    let jovens = carregarDados(FILES.jovens);
-    salvarDados(FILES.jovens, jovens.filter(j => j.id !== parseInt(req.params.id)));
-    res.redirect('/admin-lista');
-});
-
-// --- 10. AUDITORIA ---
-app.get('/historico-auditoria', permitirGestao, (req, res) => {
-    res.render('auditoria', { logs: carregarDados(FILES.logs) });
+// --- 8. WEBHOOK GITHUB (Railway Sync) ---
+app.post('/webhook-github', (req, res) => {
+    exec('git pull origin main', (err, stdout) => {
+        if (err) return res.status(500).send(err);
+        res.status(200).send('Sincronizado!');
+    });
 });
 
 // --- INICIALIZAÇÃO ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Servidor CPPJ Ativo na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Portal CPPJ Ativo na porta ${PORT}`));
