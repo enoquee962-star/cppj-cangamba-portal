@@ -10,15 +10,16 @@ const app = express();
 
 // --- 1. CONFIGURAÇÕES INICIAIS ---
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
-    secret: 'cppj-cangamba-secret-key',
+    secret: 'cppj-cangamba-secret-2026',
     resave: false,
     saveUninitialized: true
 }));
 
-// Configuração do Multer (Armazenamento em memória para gerar fotos em Base64)
+// Configuração do Multer para processar fotos em memória (Base64)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -32,10 +33,10 @@ const FILES = {
     noticias: path.join(DATA_DIR, 'noticias.json')
 };
 
-// Garantir que a pasta data existe
+// Criar pasta data se não existir
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-// Funções Auxiliares para Manipulação de JSON
+// Funções Auxiliares
 const carregarDados = (caminho) => {
     try {
         if (!fs.existsSync(caminho)) return [];
@@ -53,7 +54,7 @@ const registarLog = (usuario, acao, detalhe) => {
     salvarDados(FILES.logs, logs.slice(0, 500));
 };
 
-// --- 2. MIDDLEWARES DE ACESSO ---
+// --- 2. MIDDLEWARES DE PROTEÇÃO ---
 const verificarLogin = (req, res, next) => {
     if (req.session.user) return next();
     res.redirect('/login');
@@ -61,10 +62,10 @@ const verificarLogin = (req, res, next) => {
 
 const permitirGestao = (req, res, next) => {
     if (req.session.user && (req.session.user.tipo === 'coordenador' || req.session.user.tipo === 'tesoureiro')) return next();
-    res.status(403).send("Acesso negado: Apenas para coordenação/tesouraria.");
+    res.status(403).render('erro', { mensagem: "Acesso negado: Nível insuficiente." });
 };
 
-// --- 3. ROTAS PÚBLICAS E CONSULTA ---
+// --- 3. PORTAL PÚBLICO E CONSULTA ---
 app.get('/', (req, res) => {
     res.render('index', { noticias: carregarDados(FILES.noticias) });
 });
@@ -76,7 +77,7 @@ app.post('/consultar-registo', (req, res) => {
     res.send("<script>alert('Membro não encontrado em Cangamba!'); window.history.back();</script>");
 });
 
-// --- 4. AUTENTICAÇÃO E LOGIN ---
+// --- 4. AUTENTICAÇÃO ---
 app.get('/login', (req, res) => res.render('login'));
 
 app.post('/auth', (req, res) => {
@@ -89,7 +90,7 @@ app.post('/auth', (req, res) => {
         registarLog(user.nome, "LOGIN", "Entrou no sistema");
         return res.redirect(user.tipo === 'registador' ? '/meus-registos' : '/admin-dashboard');
     }
-    res.send("<script>alert('Utilizador ou Senha incorretos!'); window.history.back();</script>");
+    res.send("<script>alert('Utilizador ou Senha inválidos!'); window.history.back();</script>");
 });
 
 app.get('/logout', (req, res) => {
@@ -97,7 +98,17 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-// --- 5. GESTÃO DE MEMBROS ---
+// --- 5. GESTÃO DE MEMBROS E ADMIN ---
+app.get('/admin-dashboard', verificarLogin, (req, res) => {
+    const jovens = carregarDados(FILES.jovens);
+    const financas = carregarDados(FILES.financas);
+    res.render('dashboard', { total: jovens.length, financas: financas.slice(0, 5), user: req.session.user });
+});
+
+app.get('/admin-lista', verificarLogin, (req, res) => {
+    res.render('lista_membros', { jovens: carregarDados(FILES.jovens), user: req.session.user });
+});
+
 app.get('/cadastro', verificarLogin, (req, res) => res.render('cadastro_passos'));
 
 app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
@@ -114,36 +125,22 @@ app.post('/finalizar-cadastro', verificarLogin, (req, res) => {
     res.redirect('/admin-lista');
 });
 
-app.get('/admin-lista', verificarLogin, (req, res) => {
-    res.render('lista_membros', { jovens: carregarDados(FILES.jovens), user: req.session.user });
-});
-
-app.get('/eliminar/:id', permitirGestao, (req, res) => {
-    let j = carregarDados(FILES.jovens).filter(m => m.id !== parseInt(req.params.id));
-    salvarDados(FILES.jovens, j);
-    res.redirect('/admin-lista');
-});
-
-// --- 6. FINANÇAS E TESOURARIA ---
+// --- 6. FINANCEIRO E TESOURARIA ---
 app.get('/relatorio-financeiro', permitirGestao, (req, res) => {
-    const financas = carregarDados(FILES.financas);
-    const entradas = financas.filter(f => f.categoria === 'Entrada').reduce((s, f) => s + parseFloat(f.valor), 0);
-    const saidas = financas.filter(f => f.categoria === 'Saída').reduce((s, f) => s + parseFloat(f.valor), 0);
+    const f = carregarDados(FILES.financas);
+    const entradas = f.filter(x => x.categoria === 'Entrada').reduce((s, x) => s + parseFloat(x.valor), 0);
+    const saidas = f.filter(x => x.categoria === 'Saída').reduce((s, x) => s + parseFloat(x.valor), 0);
     res.render('relatorio_financeiro', { 
-        financas, 
-        totalEntradas: entradas, 
-        totalSaidas: saidas, 
-        saldoFinal: entradas - saidas, 
-        user: req.session.user 
+        financas: f, totalEntradas: entradas, totalSaidas: saidas, saldoFinal: entradas - saidas, user: req.session.user 
     });
 });
 
 app.post('/adicionar-financa', permitirGestao, (req, res) => {
     let f = carregarDados(FILES.financas);
-    const nova = { ...req.body, id: Date.now(), data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
-    f.unshift(nova);
+    const mov = { ...req.body, id: Date.now(), data: new Date().toLocaleDateString('pt-PT'), resp: req.session.user.nome };
+    f.unshift(mov);
     salvarDados(FILES.financas, f);
-    registarLog(req.session.user.nome, "FINANÇAS", `Lançou ${req.body.categoria} de ${req.body.valor} Kz`);
+    registarLog(req.session.user.nome, "FINANÇAS", `Lançamento de ${req.body.valor} Kz`);
     res.redirect('/relatorio-financeiro');
 });
 
@@ -157,7 +154,7 @@ app.post('/gerar-passe', verificarLogin, upload.single('foto'), (req, res) => {
     res.render('passe_membro', { j, fotoEnviada: fotoBase64 });
 });
 
-// --- 8. AUDITORIA E WEBHOOKS ---
+// --- 8. AUDITORIA E WEBHOOKS (GITHUB) ---
 app.get('/historico-auditoria', permitirGestao, (req, res) => {
     res.render('auditoria', { logs: carregarDados(FILES.logs) });
 });
@@ -165,19 +162,13 @@ app.get('/historico-auditoria', permitirGestao, (req, res) => {
 app.post('/webhook-github', (req, res) => {
     exec('git pull origin main', (err, stdout) => {
         if (err) return res.status(500).send("Erro no sincronismo");
-        console.log("Servidor atualizado via GitHub");
-        res.status(200).send("OK");
+        console.log("♻️ Servidor atualizado via GitHub Push");
+        res.status(200).send("Atualizado");
     });
 });
 
-// --- INICIALIZAÇÃO DO SERVIDOR ---
+// --- INICIALIZAÇÃO ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`
-    ---------------------------------------------------
-    🚀 PORTAL CPPJ CANGAMBA ATIVO
-    📡 URL: http://localhost:${PORT}
-    📂 AMBIENTE: ${process.env.NODE_ENV || 'Desenvolvimento'}
-    ---------------------------------------------------
-    `);
+    console.log(`🚀 CPPJ Cangamba Online: Porta ${PORT}`);
 });
